@@ -1,0 +1,10 @@
+workspace/
+__pycache__/
+*.mp4
+*.wav
+*.mp3
+*.ass
+*.json
+.env
+venv/
+.vscode/
