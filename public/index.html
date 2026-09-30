@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KhmerDub Studio Pro - V3 Turbo 4X</title>
+    <title>KhmerDub Studio Pro - 4K Ultra HD Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,41 +44,49 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #4a5568;
         }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
     </style>
 </head>
 
-<body class="bg-studio-base text-slate-200 font-sans h-screen flex flex-col overflow-hidden select-none">
+<body
+    class="bg-studio-base text-slate-200 font-sans min-h-screen lg:h-screen flex flex-col overflow-y-auto lg:overflow-hidden select-none">
 
     <!-- TOP APP BAR -->
     <header
-        class="h-14 border-b border-studio-border bg-studio-panel px-4 flex items-center justify-between flex-shrink-0 z-30">
-        <div class="flex items-center gap-3">
+        class="py-2.5 px-3 sm:px-4 border-b border-studio-border bg-studio-panel flex flex-wrap items-center justify-between gap-2 flex-shrink-0 z-30">
+        <div class="flex items-center gap-2 sm:gap-3">
             <div
-                class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-rose-500/20">
-                <i data-lucide="zap" class="w-5 h-5 fill-white"></i>
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-rose-500/20">
+                <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5 fill-white"></i>
             </div>
             <div>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-white uppercase tracking-wider">KhmerDub Studio Pro</span>
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">KhmerDub Studio
+                        Pro</span>
                     <span
-                        class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">V3-TURBO
+                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">V3-TURBO
                         4X</span>
                 </div>
-                <p class="text-[10px] text-slate-400">Large-v3-Turbo Whisper • GPU Hardware Render • 1080p & 4K</p>
+                <p class="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">Large-v3-Turbo Whisper • GPU
+                    Hardware Render • 1080p & 4K</p>
             </div>
         </div>
 
         <!-- Audio Monitor Status -->
-        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-studio-card border border-studio-border text-xs">
+        <div
+            class="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-studio-card border border-studio-border text-xs">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="text-slate-300 text-[11px]">Audio Monitor: <strong class="text-emerald-400">Khmer Dub Active
                     (No Foreign Voice)</strong></span>
         </div>
 
         <!-- Top Action Buttons -->
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <label
-                class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/40 text-xs text-white font-medium transition shadow">
+                class="cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/40 text-xs text-white font-medium transition shadow active:scale-95">
                 <input type="file" id="batchUploadInput" multiple accept="video/mp4,video/mkv,video/quicktime,video/*"
                     class="hidden" onchange="onFilesChosen(event)">
                 <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
@@ -86,19 +94,19 @@
             </label>
 
             <button id="btnTranscribe" onclick="runTranscribeSingle()" disabled
-                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow-md">
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow active:scale-95">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                 <span id="txtTranscribe">Turbo Transcribe ភាគនេះ</span>
             </button>
 
             <button id="btnTranscribeAll" onclick="runTranscribeAllEpisodes()" disabled
-                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-xs text-emerald-200 font-medium transition shadow">
+                class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-xs text-emerald-200 font-medium transition shadow active:scale-95">
                 <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span id="txtTranscribeAll">Turbo គ្រប់ភាគ (Auto)</span>
             </button>
 
             <button id="btnExport" onclick="runExportBatch()" disabled
-                class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow">
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow active:scale-95">
                 <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
                 <span id="txtExport">Turbo Export ទាំងអស់</span>
             </button>
@@ -106,11 +114,12 @@
     </header>
 
     <!-- MAIN WORKSPACE -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
         <!-- 1. LEFT PANEL: EPISODES -->
-        <aside class="w-64 border-r border-studio-border bg-studio-panel flex flex-col flex-shrink-0">
-            <div class="p-3 border-b border-studio-border flex items-center justify-between text-xs">
+        <aside
+            class="w-full lg:w-60 border-b lg:border-b-0 lg:border-r border-studio-border bg-studio-panel flex flex-col flex-shrink-0 max-h-56 lg:max-h-full">
+            <div class="p-2.5 border-b border-studio-border flex items-center justify-between text-xs">
                 <span class="font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
                     <i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i> ជួររឿងភាគ (Episodes)
                 </span>
@@ -118,38 +127,41 @@
                     ភាគ</span>
             </div>
 
-            <div class="p-2.5 bg-studio-card/30 border-b border-studio-border space-y-1.5 text-xs">
+            <div class="p-2 bg-studio-card/30 border-b border-studio-border space-y-1 text-xs">
                 <label class="flex items-center gap-2 cursor-pointer text-slate-300 text-[11px]">
                     <input type="checkbox" id="chkMerge" class="w-3.5 h-3.5 accent-cyan-500 rounded">
                     <span>ច្របាច់បញ្ចូលគ្នា (Merge) ទៅជា 1 រឿង</span>
                 </label>
             </div>
 
-            <div id="epList" class="flex-1 overflow-y-auto p-2 space-y-1.5">
-                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-4">
-                    <i data-lucide="upload-cloud" class="w-8 h-8 mb-2 stroke-[1.5] text-slate-600"></i>
+            <div id="epList" class="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[90px]">
+                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-3">
+                    <i data-lucide="upload-cloud" class="w-6 h-6 mb-1 text-slate-600"></i>
                     <span>សូមចុច "+ ថែមរឿងភាគ" ដើម្បីចាប់ផ្ដើម</span>
                 </div>
             </div>
         </aside>
 
         <!-- 2. CENTER PANEL: DIALOGUE SCRIPT -->
-        <main class="flex-1 flex flex-col bg-studio-base overflow-hidden">
+        <main
+            class="w-full flex-1 flex flex-col bg-studio-base border-b lg:border-b-0 overflow-hidden min-h-[360px] lg:min-h-0">
             <div
-                class="h-10 border-b border-studio-border bg-studio-panel/60 px-4 flex items-center justify-between text-xs">
-                <span id="currentEpisodeHeader" class="font-bold text-cyan-400 flex items-center gap-2 text-xs">
-                    <i data-lucide="message-square-text" class="w-4 h-4"></i> អត្ថបទបកប្រែ (Script Dialogues)
+                class="h-9 border-b border-studio-border bg-studio-panel/60 px-3 flex items-center justify-between text-xs">
+                <span id="currentEpisodeHeader"
+                    class="font-bold text-cyan-400 flex items-center gap-1.5 text-xs truncate max-w-[240px]">
+                    <i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> អត្ថបទបកប្រែ (Script Dialogues)
                 </span>
-                <div class="flex items-center gap-3 text-[11px] text-slate-400">
+                <div class="flex items-center gap-2 text-[10px] text-slate-400">
                     <span id="currentDialogueCount">0 ឃ្លា</span>
-                    <span class="text-studio-border">|</span>
-                    <span>Engine: <strong class="text-rose-400">Large-V3-Turbo (4X Speed)</strong></span>
+                    <span class="hidden sm:inline text-studio-border">|</span>
+                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">Large-V3-Turbo
+                            (4X)</strong></span>
                 </div>
             </div>
 
-            <div id="dialogueContainer" class="flex-1 overflow-y-auto p-3 space-y-2">
-                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs">
-                    <i data-lucide="captions" class="w-10 h-10 mb-2 stroke-[1.5]"></i>
+            <div id="dialogueContainer" class="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
+                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-6">
+                    <i data-lucide="captions" class="w-8 h-8 mb-2 stroke-[1.5]"></i>
                     <span>ជ្រើសរើសភាគមួយ រួចចុច "Turbo Transcribe" ដើម្បីដំណើរការ</span>
                 </div>
             </div>
@@ -157,7 +169,7 @@
 
         <!-- 3. RIGHT PANEL: MONITOR & SETTINGS -->
         <aside
-            class="w-80 md:w-96 border-l border-studio-border bg-studio-panel flex flex-col overflow-y-auto flex-shrink-0 p-3 space-y-3">
+            class="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-studio-border bg-studio-panel flex flex-col overflow-y-auto flex-shrink-0 p-3 space-y-3">
 
             <!-- Video Monitor -->
             <div>
@@ -176,7 +188,6 @@
                     class="w-full aspect-[9/16] max-h-56 bg-black rounded-lg overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto">
                     <video id="player" class="w-full h-full object-contain hidden" ontimeupdate="onVideoTimeUpdate()"
                         onloadedmetadata="onVideoLoaded()"></video>
-
                     <div id="emptyPlayerNotice" class="text-center p-4">
                         <i data-lucide="film" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
                         <span class="text-[11px] text-slate-500">ផ្ទាំងបញ្ចាំងវីដេអូ</span>
@@ -184,87 +195,65 @@
                 </div>
             </div>
 
-            <!-- WHISPER ENGINE SELECTOR -->
-            <div
-                class="p-2.5 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-rose-300 text-[11px] flex items-center gap-1.5">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-rose-400"></i> AI Transcribe Turbo
+            <!-- Settings Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                <div
+                    class="p-2 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-1 text-xs">
+                    <span class="font-bold text-rose-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="zap" class="w-3 h-3 text-rose-400"></i> AI Transcribe
                     </span>
-                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/30 text-rose-200 font-bold">4X
-                        Speed</span>
+                    <select id="selModelSize"
+                        class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1 text-white text-[11px] outline-none">
+                        <option value="large-v3-turbo" selected>⚡ Large-v3-Turbo (លឿនបំផុត)</option>
+                        <option value="base">🚀 Base Model</option>
+                    </select>
                 </div>
-                <select id="selModelSize"
-                    class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-xs font-semibold focus:border-rose-400 outline-none">
-                    <option value="large-v3-turbo" selected>⚡ Large-v3-Turbo (លឿនបំផុត + ត្រឹមត្រូវខ្ពស់)</option>
-                    <option value="base">🚀 Base Model (លឿនធម្មតា)</option>
-                </select>
+
+                <div
+                    class="p-2 rounded-xl bg-gradient-to-r from-amber-950/40 to-studio-card border border-amber-500/50 space-y-1 text-xs">
+                    <span class="font-bold text-amber-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> Resolution
+                    </span>
+                    <select id="selResolution"
+                        class="w-full bg-studio-base border border-amber-500/60 rounded px-2 py-1 text-white text-[11px] outline-none">
+                        <option value="1080p" selected>💎 Full HD 1080p (ច្បាស់)</option>
+                        <option value="4k">👑 Ultra HD 4K (ច្បាស់កំពូល)</option>
+                        <option value="original">⚡ Original</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- VIDEO RESOLUTION SELECTOR -->
-            <div
-                class="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 to-studio-card border border-amber-500/50 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-amber-300 text-[11px] flex items-center gap-1.5">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> កម្រិតច្បាស់វីដេអូ
-                        (Resolution)
-                    </span>
-                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200 font-bold">Hardware
-                        Accel</span>
-                </div>
-                <select id="selResolution"
-                    class="w-full bg-studio-base border border-amber-500/60 rounded px-2.5 py-1.5 text-white text-xs font-semibold focus:border-amber-400 outline-none">
-                    <option value="1080p" selected>💎 Full HD 1080p (ច្បាស់កម្រិតខ្ពស់ - ណែនាំ)</option>
-                    <option value="4k">👑 Ultra HD 4K (ច្បាស់កម្រិតកំពូល 4K Crisp)</option>
-                    <option value="original">⚡ Original (គុណភាពដើម)</option>
-                </select>
-            </div>
-
-            <!-- SPEED CONTROL SLIDER -->
             <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2 text-xs">
                 <div class="flex items-center justify-between">
-                    <span class="font-bold text-cyan-300 text-[11px] flex items-center gap-1.5">
-                        <i data-lucide="gauge" class="w-3.5 h-3.5 text-cyan-400"></i> ល្បឿនសំឡេងតួ (Voice Speed)
-                    </span>
-                    <span id="lblSpeedVal" class="text-emerald-400 font-mono font-bold text-[11px]">1.00x</span>
+                    <span class="font-bold text-cyan-300 text-[10px]">ល្បឿនសំឡេង (Voice Speed)</span>
+                    <span id="lblSpeedVal" class="text-emerald-400 font-mono font-bold text-[10px]">1.00x</span>
                 </div>
                 <input type="range" id="rngSpeed" min="0.5" max="2.5" step="0.05" value="1.0"
                     oninput="updateSpeedVal(this.value)" class="w-full accent-cyan-500 h-1 cursor-pointer">
             </div>
 
-            <!-- SPEAKER VOICE SELECTOR -->
-            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2 text-xs">
-                <span class="font-bold text-cyan-300 text-[11px] flex items-center gap-1.5">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-cyan-400"></i> សំឡេងតួអង្គទូទៅ (Speaker Mode)
-                </span>
+            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-1.5 text-xs">
+                <span class="font-bold text-cyan-300 text-[10px] block">សំឡេងតួអង្គទូទៅ (Speaker Mode)</span>
                 <select id="selSpeakerMode"
-                    class="w-full bg-studio-base border border-studio-border rounded px-2 py-1.5 text-slate-200 text-[11px] font-medium focus:border-cyan-400 outline-none">
-                    <option value="auto">Auto (AI Vision ស្កេនមុខតួ + Context)</option>
-                    <option value="male">តួប្រុសសុទ្ធ (ពិសិដ្ឋ - Piseth)</option>
-                    <option value="female">តួស្រីសុទ្ធ (ស្រីមុំ - Sreymom)</option>
+                    class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-slate-200 text-[11px] outline-none">
+                    <option value="auto">Auto (AI Vision ស្កេនមុខ)</option>
+                    <option value="male">តួប្រុសសុទ្ធ (ពិសិដ្ឋ)</option>
+                    <option value="female">តួស្រីសុទ្ធ (ស្រីមុំ)</option>
                 </select>
             </div>
 
-            <!-- AUDIO MIXER CONTROLS -->
-            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2.5 text-xs">
-                <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">កម្រិតសំឡេង (Audio
-                    Mixer)</span>
-
-                <div class="space-y-2">
-                    <div>
-                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                            <span>សំឡេងតួខ្មែរ (Khmer Dub):</span>
-                            <span id="dubDisplay" class="text-emerald-400 font-mono">150%</span>
-                        </div>
-                        <input type="range" id="rngDub" min="0" max="2.0" step="0.05" value="1.50"
-                            oninput="updateDubVal(this.value)" class="w-full accent-emerald-500 h-1">
-                    </div>
+            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2 text-xs">
+                <div class="flex justify-between text-[10px] text-slate-400">
+                    <span>កម្រិតសំឡេងខ្មែរ (Khmer Dub):</span>
+                    <span id="dubDisplay" class="text-emerald-400 font-mono">150%</span>
                 </div>
+                <input type="range" id="rngDub" min="0" max="2.0" step="0.05" value="1.50"
+                    oninput="updateDubVal(this.value)" class="w-full accent-emerald-500 h-1">
 
-                <div class="pt-2 border-t border-studio-border/50">
-                    <label class="block text-[10px] text-slate-400 mb-0.5">ពណ៌ Subtitle លើ Video</label>
+                <div class="pt-1.5 border-t border-studio-border/50">
+                    <label class="block text-[10px] text-slate-400 mb-0.5">ពណ៌ Subtitle</label>
                     <select id="selColor"
-                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-slate-200 text-[11px]">
+                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-slate-200 text-[10px]">
                         <option value="&H00FFFF">ពណ៌លឿង (Yellow)</option>
                         <option value="&HFFFFFF">ពណ៌ស (White)</option>
                         <option value="&H00FF00">ពណ៌បៃតងខ្ចី (Cyan)</option>
@@ -276,7 +265,7 @@
             <div id="renderBox"
                 class="hidden p-3 rounded-xl bg-indigo-950/60 border border-indigo-500/50 space-y-2 text-xs shadow-lg">
                 <div class="flex justify-between items-center">
-                    <span id="renderStatus" class="text-cyan-300 font-semibold text-[11px]">កំពុង Turbo Render...</span>
+                    <span id="renderStatus" class="text-cyan-300 font-semibold text-[10px]">កំពុង Turbo Render...</span>
                     <span id="renderPercent" class="text-cyan-400 font-mono font-bold text-[10px]">0%</span>
                 </div>
                 <div class="w-full bg-studio-base h-2 rounded-full overflow-hidden border border-indigo-900">
@@ -285,73 +274,68 @@
                         style="width: 0%"></div>
                 </div>
 
-                <!-- ប៊ូតុងរើស Folder រួចទាញយកទាំងអស់ -->
-                <div id="renderDownloadArea" class="pt-1.5 hidden">
+                <div id="renderDownloadArea" class="pt-1 hidden">
                     <button id="btnDownloadAllToFolder" onclick="downloadAllVideosWithFolderPicker()"
-                        class="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs">
-                        <i data-lucide="folder-down" class="w-4 h-4"></i>
-                        <span>រើស Folder រួចទាញយកវីដេអូទាំងអស់</span>
+                        class="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95 text-xs">
+                        <i data-lucide="folder-down" class="w-3.5 h-3.5"></i>
+                        <span>ទាញយកវីដេអូដែល Render ចប់</span>
                     </button>
-                    <p id="downloadProgressNotice" class="text-[10px] text-slate-400 text-center mt-1 hidden"></p>
                 </div>
             </div>
         </aside>
     </div>
 
     <!-- 4. BOTTOM PANEL: TIMELINE -->
-    <footer class="h-52 border-t border-studio-border bg-studio-panel flex flex-col flex-shrink-0 z-20">
-        <div class="h-9 border-b border-studio-border px-3 flex items-center justify-between bg-studio-card/80 text-xs">
-            <div class="flex items-center gap-2">
+    <footer class="border-t border-studio-border bg-studio-panel flex flex-col flex-shrink-0 z-20">
+        <div
+            class="h-9 border-b border-studio-border px-3 flex flex-wrap items-center justify-between gap-1.5 bg-studio-card/80 text-xs">
+            <div class="flex items-center gap-1.5">
                 <button id="btnPlayPause" onclick="togglePlayPause()"
                     class="w-6 h-6 rounded bg-cyan-600 hover:bg-cyan-500 flex items-center justify-center text-white transition shadow">
-                    <i id="playIcon" data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
+                    <i id="playIcon" data-lucide="play" class="w-3 h-3 fill-white"></i>
                 </button>
-                <span id="timeDisplay" class="font-mono text-cyan-400 text-xs font-semibold mr-2">00:00.00 /
-                    00:00.00</span>
+                <span id="timeDisplay"
+                    class="font-mono text-cyan-400 text-[10px] sm:text-xs font-semibold mr-1">00:00.00 / 00:00.00</span>
 
-                <div class="h-4 w-px bg-studio-border mx-1"></div>
-                <button onclick="splitCurrentDialogue()" title="កាត់ឃ្លាជាពីរចំ Playhead (Shortcut: C)"
-                    class="flex items-center gap-1 px-2.5 py-1 rounded bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 text-rose-200 text-[10px] font-semibold transition">
-                    <i data-lucide="scissors" class="w-3 h-3 text-rose-300"></i>
-                    <span>កាត់ត្រង់នេះ (Split)</span>
-                </button>
-
-                <button onclick="setTrimInPoint()" title="កាត់ផ្នែកខាងដើមចោលមកត្រឹម Playhead"
-                    class="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-[10px] transition">
-                    <i data-lucide="chevron-right-square" class="w-3 h-3 text-cyan-400"></i>
-                    <span>Trim ក្បាល [</span>
+                <button onclick="splitCurrentDialogue()"
+                    class="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 text-rose-200 text-[9px] font-semibold">
+                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i>
+                    <span>កាត់ (Split)</span>
                 </button>
 
-                <button onclick="setTrimOutPoint()" title="កាត់ផ្នែកខាងចុងចោលត្រឹម Playhead"
-                    class="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-[10px] transition">
-                    <i data-lucide="chevron-left-square" class="w-3 h-3 text-cyan-400"></i>
-                    <span>Trim កន្ទុយ ]</span>
+                <button onclick="setTrimInPoint()"
+                    class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300 text-[9px]">
+                    [ Trim
                 </button>
 
-                <button onclick="resetTrimPoints()" class="px-1.5 py-1 text-[10px] text-slate-500 hover:text-slate-300">
-                    Reset Trim
+                <button onclick="setTrimOutPoint()"
+                    class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300 text-[9px]">
+                    Trim ]
+                </button>
+
+                <button onclick="resetTrimPoints()" class="px-1 text-[9px] text-slate-500 hover:text-slate-300">
+                    Reset
                 </button>
             </div>
 
-            <div class="flex items-center gap-4 text-[10px] text-slate-400">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-500/80"></span> Video
-                    Track</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500/80"></span>
-                    Khmer Dub Audio</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500/80"></span>
-                    Subtitles</span>
+            <div class="hidden sm:flex items-center gap-3 text-[9px] text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-blue-500"></span> Video</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-emerald-500"></span> Dub</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-amber-500"></span> Sub</span>
             </div>
         </div>
 
-        <div class="flex-1 flex overflow-hidden">
+        <div class="h-32 lg:h-36 flex overflow-hidden">
             <div
-                class="w-36 border-r border-studio-border bg-studio-panel/80 flex flex-col justify-around py-1 px-2.5 text-[9px] font-mono text-slate-400 flex-shrink-0">
-                <div class="flex items-center justify-between"><span class="text-blue-400 font-semibold">VIDEO</span><i
-                        data-lucide="video" class="w-3 h-3 text-blue-400"></i></div>
-                <div class="flex items-center justify-between"><span class="text-emerald-400 font-semibold">KHMER
-                        DUB</span><i data-lucide="mic" class="w-3 h-3 text-emerald-400"></i></div>
+                class="w-24 sm:w-32 border-r border-studio-border bg-studio-panel/80 flex flex-col justify-around py-1 px-2 text-[8px] sm:text-[9px] font-mono text-slate-400 flex-shrink-0">
                 <div class="flex items-center justify-between"><span
-                        class="text-amber-400 font-semibold">SUBTITLES</span><i data-lucide="subtitles"
+                        class="text-blue-400 font-semibold truncate">VIDEO</span><i data-lucide="video"
+                        class="w-3 h-3 text-blue-400"></i></div>
+                <div class="flex items-center justify-between"><span
+                        class="text-emerald-400 font-semibold truncate">DUB</span><i data-lucide="mic"
+                        class="w-3 h-3 text-emerald-400"></i></div>
+                <div class="flex items-center justify-between"><span
+                        class="text-amber-400 font-semibold truncate">SUB</span><i data-lucide="subtitles"
                         class="w-3 h-3 text-amber-400"></i></div>
             </div>
 
@@ -371,21 +355,21 @@
                     style="width: 0%;"></div>
 
                 <div
-                    class="h-7 w-full bg-blue-950/30 rounded border border-blue-500/30 relative overflow-hidden flex items-center px-2">
+                    class="h-6 w-full bg-blue-950/30 rounded border border-blue-500/30 relative overflow-hidden flex items-center px-2">
                     <div
-                        class="w-full h-4 bg-blue-600/40 rounded flex items-center justify-between px-2 text-[8px] text-blue-300 font-mono">
+                        class="w-full h-3.5 bg-blue-600/40 rounded flex items-center justify-between px-2 text-[8px] text-blue-300 font-mono">
                         <span>Video Track</span>
-                        <span id="tlVideoName">--</span>
+                        <span id="tlVideoName" class="truncate max-w-[120px]">--</span>
                     </div>
                 </div>
 
                 <div id="dubTrackRow"
-                    class="h-7 w-full bg-emerald-950/30 rounded border border-emerald-500/30 relative overflow-hidden flex items-center">
+                    class="h-6 w-full bg-emerald-950/30 rounded border border-emerald-500/30 relative overflow-hidden flex items-center">
                     <span class="text-[8px] text-emerald-500/60 font-mono px-2">រង់ចាំ Transcribe...</span>
                 </div>
 
                 <div id="subTrackRow"
-                    class="h-7 w-full bg-amber-950/30 rounded border border-amber-500/30 relative overflow-hidden flex items-center">
+                    class="h-6 w-full bg-amber-950/30 rounded border border-amber-500/30 relative overflow-hidden flex items-center">
                     <span class="text-[8px] text-amber-500/60 font-mono px-2">គ្មាន Subtitles...</span>
                 </div>
             </div>
@@ -397,13 +381,16 @@
         let activeIndex = -1;
         let localFileMap = {};
         let syncInterval = null;
-        let lastSpokenIndex = -1;
         let currentTrimIn = 0.0;
         let currentTrimOut = null;
         let completedDownloadList = [];
 
         function updateSpeedVal(val) {
             document.getElementById("lblSpeedVal").innerText = `${parseFloat(val).toFixed(2)}x`;
+        }
+
+        function updateDubVal(val) {
+            document.getElementById("dubDisplay").innerText = `${Math.round(val * 100)}%`;
         }
 
         async function onFilesChosen(event) {
@@ -438,7 +425,7 @@
             document.getElementById("lblCount").innerText = `${episodeList.length} ភាគ`;
 
             if (!episodeList.length) {
-                box.innerHTML = `<div class="text-center p-4 text-slate-500 text-xs">គ្មានវីដេអូ</div>`;
+                box.innerHTML = `<div class="text-center p-3 text-slate-500 text-xs">គ្មានវីដេអូ</div>`;
                 return;
             }
 
@@ -446,11 +433,11 @@
             episodeList.forEach((ep, idx) => {
                 const item = document.createElement("div");
                 item.onclick = () => pickEpisode(idx);
-                item.className = `p-2 rounded-lg border cursor-pointer transition text-xs ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80' : 'bg-studio-card border-studio-border hover:border-slate-500'}`;
+                item.className = `p-2 rounded-lg border cursor-pointer transition text-xs ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80' : 'bg-studio-card border-studio-border'}`;
                 item.innerHTML = `
           <div class="flex items-center justify-between mb-1">
-            <span class="font-bold text-white truncate max-w-[110px] flex items-center gap-1.5">
-              <span class="px-1.5 py-0.2 rounded bg-studio-base text-cyan-400 font-mono text-[9px]">${ep.code}</span>
+            <span class="font-bold text-white truncate max-w-[120px] flex items-center gap-1 text-[11px]">
+              <span class="px-1 py-0.2 rounded bg-studio-base text-cyan-400 font-mono text-[9px]">${ep.code}</span>
               ${ep.filename}
             </span>
             <span class="text-[9px] text-cyan-300 font-mono">${ep.status}</span>
@@ -470,7 +457,7 @@
             renderEpisodeSidebar();
 
             const ep = episodeList[idx];
-            document.getElementById("currentEpisodeHeader").innerHTML = `<i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> អត្ថបទបកប្រែ (${ep.code} - ${ep.filename})`;
+            document.getElementById("currentEpisodeHeader").innerHTML = `<i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> ${ep.code} - ${ep.filename}`;
             document.getElementById("tlVideoName").innerText = ep.filename;
             document.getElementById("btnTranscribe").disabled = false;
 
@@ -482,15 +469,8 @@
                 p.src = previewSrc;
                 p.classList.remove("hidden");
                 emptyNotice.classList.add("hidden");
-
-                if (ep.output_url) {
-                    p.muted = false;
-                    p.volume = 1.0;
-                } else {
-                    p.muted = true;
-                    p.volume = 0;
-                    p.defaultMuted = true;
-                }
+                p.muted = !ep.output_url;
+                p.volume = 1.0;
             }
 
             resetTrimPoints();
@@ -526,14 +506,14 @@
             const txt = document.getElementById("txtTranscribe");
 
             btn.disabled = true;
-            txt.innerText = "⚡ កំពុង Turbo Transcribe...";
+            txt.innerText = "⚡ កំពុង Transcribe...";
 
             try {
                 await executeTranscribe(activeIndex);
                 txt.innerText = "Turbo Transcribe ភាគនេះ";
             } catch (err) {
                 alert("Transcribe បរាជ័យ: " + err.message);
-                txt.innerText = "សាកល្បងម្ដងទៀត";
+                txt.innerText = "សាកម្ដងទៀត";
             } finally {
                 btn.disabled = false;
             }
@@ -564,7 +544,7 @@
             document.getElementById("currentDialogueCount").innerText = `${dialogues.length} ឃ្លា`;
 
             if (!dialogues || !dialogues.length) {
-                box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-amber-400 text-xs text-center p-8">
+                box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-amber-400 text-xs text-center p-6">
           មិនទាន់បាន Transcribe ភាគនេះទេ! សូមចុចប៊ូតុង "Turbo Transcribe ភាគនេះ" ខាងលើ។
         </div>`;
                 return;
@@ -573,28 +553,28 @@
             box.innerHTML = "";
             dialogues.forEach((d, i) => {
                 const row = document.createElement("div");
-                row.className = "p-2.5 rounded-xl bg-studio-card border border-studio-border text-xs space-y-1.5 relative group";
+                row.className = "p-2 sm:p-2.5 rounded-xl bg-studio-card border border-studio-border text-xs space-y-1.5 relative";
                 row.innerHTML = `
           <div class="flex items-center justify-between pb-1 border-b border-studio-border/40">
             <button onclick="seekToDialogue(${d.start})" class="font-mono text-cyan-400 hover:underline bg-studio-base px-2 py-0.5 rounded text-[10px] flex items-center gap-1">
               <i data-lucide="play-circle" class="w-3 h-3 text-cyan-400"></i> ${d.start}s - ${d.end}s
             </button>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <select onchange="episodeList[${activeIndex}].dialogues[${i}].speaker = this.value" class="bg-studio-base border border-studio-border rounded px-1.5 py-0.5 text-[10px] text-cyan-300">
                 <option value="piseth" ${d.speaker === 'piseth' ? 'selected' : ''}>តួប្រុស (ពិសិដ្ឋ)</option>
                 <option value="sreymom" ${d.speaker === 'sreymom' ? 'selected' : ''}>តួស្រី (ស្រីមុំ)</option>
               </select>
-              <button onclick="previewAudioLine('${d.khmer_text.replace(/'/g, "\\'")}', '${d.speaker}', ${i})" class="px-2.5 py-1 rounded bg-cyan-600 text-white hover:bg-cyan-500 text-[10px] flex items-center gap-1 shadow">
+              <button onclick="previewAudioLine('${d.khmer_text.replace(/'/g, "\\'")}', '${d.speaker}', ${i})" class="px-2 py-0.5 rounded bg-cyan-600 text-white hover:bg-cyan-500 text-[10px] flex items-center gap-1 shadow active:scale-95">
                 <i data-lucide="volume-2" class="w-3 h-3"></i> ស្ដាប់
               </button>
-              <button onclick="deleteDialogueLine(${i})" title="លុបឃ្លានេះចេញ" class="p-1 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <button onclick="deleteDialogueLine(${i})" class="p-1 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition">
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
               </button>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div class="bg-studio-base p-1.5 rounded text-slate-400 text-[11px] select-text">${d.original_text}</div>
-            <textarea oninput="episodeList[${activeIndex}].dialogues[${i}].khmer_text = this.value" class="w-full bg-studio-base border border-studio-border focus:border-cyan-500 rounded p-1.5 text-white text-[11px] outline-none resize-none">${d.khmer_text}</textarea>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 sm:gap-2">
+            <div class="bg-studio-base p-1.5 rounded text-slate-400 text-[10px] sm:text-[11px] select-text">${d.original_text}</div>
+            <textarea oninput="episodeList[${activeIndex}].dialogues[${i}].khmer_text = this.value" class="w-full bg-studio-base border border-studio-border focus:border-cyan-500 rounded p-1.5 text-white text-[11px] outline-none resize-none rows-2">${d.khmer_text}</textarea>
           </div>
         `;
                 box.appendChild(row);
@@ -622,7 +602,7 @@
                 const widthPercent = Math.max(((d.end - d.start) / totalDuration) * 100, 2);
 
                 const dBlock = document.createElement("div");
-                dBlock.className = "absolute h-5 bg-emerald-500/70 hover:bg-emerald-400 border border-emerald-400 rounded text-[8px] text-white px-1 truncate flex items-center justify-between cursor-pointer";
+                dBlock.className = "absolute h-4 sm:h-5 bg-emerald-500/70 hover:bg-emerald-400 border border-emerald-400 rounded text-[7px] sm:text-[8px] text-white px-1 truncate flex items-center justify-between cursor-pointer";
                 dBlock.style.left = `${leftPercent}%`;
                 dBlock.style.width = `${widthPercent}%`;
                 dBlock.innerHTML = `<span>${d.speaker === 'piseth' ? 'ពិសិដ្ឋ' : 'ស្រីមុំ'}</span>`;
@@ -630,7 +610,7 @@
                 dubTrack.appendChild(dBlock);
 
                 const sBlock = document.createElement("div");
-                sBlock.className = "absolute h-5 bg-amber-500/70 border border-amber-400 rounded text-[8px] text-white px-1 truncate flex items-center";
+                sBlock.className = "absolute h-4 sm:h-5 bg-amber-500/70 border border-amber-400 rounded text-[7px] sm:text-[8px] text-white px-1 truncate flex items-center";
                 sBlock.style.left = `${leftPercent}%`;
                 sBlock.style.width = `${widthPercent}%`;
                 sBlock.innerText = d.khmer_text;
@@ -716,10 +696,8 @@
             const p = document.getElementById("player");
             const icon = document.getElementById("playIcon");
 
-            if (!episodeList[activeIndex]?.output_url) {
-                p.muted = true;
-                p.volume = 0;
-            }
+            p.muted = false;
+            p.volume = 1.0;
 
             if (p.paused) {
                 p.play();
@@ -736,27 +714,10 @@
             const playhead = document.getElementById("playhead");
             const timeDisplay = document.getElementById("timeDisplay");
 
-            if (!episodeList[activeIndex]?.output_url && (!p.muted || p.volume > 0)) {
-                p.muted = true;
-                p.volume = 0;
-            }
-
             if (p.duration) {
                 const percent = (p.currentTime / p.duration) * 100;
                 playhead.style.left = `${percent}%`;
                 timeDisplay.innerText = `${formatTime(p.currentTime)} / ${formatTime(p.duration)}`;
-
-                if (!p.paused && episodeList[activeIndex]) {
-                    const currentTime = p.currentTime;
-                    const dialogues = episodeList[activeIndex].dialogues || [];
-                    const currentIdx = dialogues.findIndex(d => currentTime >= d.start && currentTime <= d.end);
-
-                    if (currentIdx !== -1 && currentIdx !== lastSpokenIndex) {
-                        lastSpokenIndex = currentIdx;
-                        const targetLine = dialogues[currentIdx];
-                        previewAudioLine(targetLine.khmer_text, targetLine.speaker, currentIdx);
-                    }
-                }
             }
         }
 
@@ -775,13 +736,11 @@
             const clickX = e.clientX - rect.left;
             const percent = clickX / rect.width;
             p.currentTime = percent * p.duration;
-            lastSpokenIndex = -1;
         }
 
         function seekToDialogue(sec) {
             const p = document.getElementById("player");
             p.currentTime = sec;
-            lastSpokenIndex = -1;
             if (p.paused) p.play();
         }
 
@@ -794,65 +753,37 @@
 
         async function previewAudioLine(text, speaker, index) {
             let targetText = text;
-            let targetDur = null;
-
             if (index !== undefined && episodeList[activeIndex]?.dialogues[index]) {
-                const d = episodeList[activeIndex].dialogues[index];
                 const textareas = document.querySelectorAll("#dialogueContainer textarea");
-                if (textareas[index]) {
-                    targetText = textareas[index].value;
-                    d.khmer_text = targetText;
+                if (textareas[index] && textareas[index].value.trim()) {
+                    targetText = textareas[index].value.trim();
                 }
-                targetDur = Math.max(d.end - d.start, 0.3);
             }
 
             if (!targetText || !targetText.trim()) return;
 
-            const fd = new FormData();
-            fd.append("text", targetText);
-            fd.append("speaker", speaker);
-            if (targetDur) fd.append("target_duration", targetDur);
-            fd.append("speed_factor", document.getElementById("rngSpeed") ? document.getElementById("rngSpeed").value : "1.0");
-
-            let playedSuccessfully = false;
-
             try {
+                const fd = new FormData();
+                fd.append("text", targetText);
+                fd.append("speaker", speaker || "piseth");
+
                 const res = await fetch("/api/preview-tts", { method: "POST", body: fd });
                 if (res.ok) {
                     const blob = await res.blob();
-                    if (blob && blob.size > 500) {
-                        const blobUrl = URL.createObjectURL(blob);
-                        const player = new Audio(blobUrl);
-                        const dubVol = parseFloat(document.getElementById("rngDub") ? document.getElementById("rngDub").value : "1.5");
-                        player.volume = Math.min(dubVol, 1.0);
-                        await player.play();
-                        playedSuccessfully = true;
-                    }
+                    const audioUrl = URL.createObjectURL(blob);
+                    const snd = new Audio(audioUrl);
+                    snd.volume = 1.0;
+                    await snd.play();
+                    return;
                 }
-            } catch (err) {
-                console.warn("Server Audio playback error:", err);
+            } catch (err) { }
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(targetText);
+                utter.lang = 'km-KH';
+                window.speechSynthesis.speak(utter);
             }
-
-            if (!playedSuccessfully) {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(targetText);
-                    utterance.lang = 'km-KH';
-                    utterance.volume = 1.0;
-                    utterance.rate = parseFloat(document.getElementById("rngSpeed") ? document.getElementById("rngSpeed").value : "1.0");
-
-                    const voices = window.speechSynthesis.getVoices();
-                    const kmVoice = voices.find(v => v.lang.includes('km') || v.lang.includes('KH'));
-                    if (kmVoice) utterance.voice = kmVoice;
-
-                    window.speechSynthesis.speak(utterance);
-                }
-            }
-        }
-
-        function updateDubVal(val) {
-            const pct = Math.round(val * 100);
-            document.getElementById("dubDisplay").innerText = `${pct}%`;
         }
 
         async function runExportBatch() {
@@ -900,7 +831,6 @@
             }
         }
 
-        // ==================== មុខងារ Sync និងបង្ហាញប៊ូតុងទាញយកភ្លាមៗ ====================
         async function checkSync() {
             try {
                 const res = await fetch("/api/episodes");
@@ -911,21 +841,22 @@
                 let hasAnyCompleted = false;
                 completedDownloadList = [];
 
-                Object.values(data).forEach(ep => {
-                    const match = episodeList.find(e => e.id === ep.id);
-                    if (match) {
-                        match.status = ep.status;
-                        match.progress = ep.progress;
-                        match.output_url = ep.output_url;
-                        totalProgress += (ep.progress || 0);
+                episodeList.forEach(currentEp => {
+                    const epData = data[currentEp.id];
+                    if (epData) {
+                        currentEp.status = epData.status;
+                        currentEp.progress = epData.progress;
+                        currentEp.output_url = epData.output_url;
+                        totalProgress += (epData.progress || 0);
                         epCount++;
-                    }
-                    if ((ep.status === "completed" || ep.progress === 100) && ep.output_url) {
-                        hasAnyCompleted = true;
-                        completedDownloadList.push({
-                            url: ep.output_url,
-                            name: `Dubbed_${ep.code || ep.id}_${ep.filename || 'episode.mp4'}`
-                        });
+
+                        if ((epData.status === "completed" || epData.progress === 100) && epData.output_url) {
+                            hasAnyCompleted = true;
+                            completedDownloadList.push({
+                                url: epData.output_url,
+                                name: `Dubbed_${currentEp.code || currentEp.id}_${currentEp.filename || 'video.mp4'}`
+                            });
+                        }
                     }
                 });
 
@@ -937,67 +868,23 @@
 
                 renderEpisodeSidebar();
 
-                // ឱ្យតែមានភាគ Render ចប់ ឬ Progress ឡើងដល់ 100% គឺត្រូវតែបង្ហាញប៊ូតុងទាញយកភ្លាមៗ
                 if (hasAnyCompleted || (epCount > 0 && Math.round(totalProgress / epCount) >= 100)) {
-                    document.getElementById("renderStatus").innerText = "Turbo Render រួចរាល់ ១០០% (គុណភាពច្បាស់ម៉ត់)!";
+                    document.getElementById("renderStatus").innerText = "Turbo Render រួចរាល់ ១០០%!";
                     const dlArea = document.getElementById("renderDownloadArea");
                     if (dlArea) {
                         dlArea.classList.remove("hidden");
                         dlArea.style.display = "block";
                     }
                     document.getElementById("btnExport").disabled = false;
-                    if (window.lucide) lucide.createIcons();
                 }
-            } catch (e) {
-                console.error("checkSync error:", e);
-            }
+            } catch (e) { }
         }
 
-        // ==================== មុខងាររើស Folder រួចទាញយកវីដេអូទាំងអស់ ====================
         async function downloadAllVideosWithFolderPicker() {
             if (!completedDownloadList || !completedDownloadList.length) {
                 alert("មិនមានវីដេអូដែល Render ចប់សម្រាប់ទាញយកទេ!");
                 return;
             }
-
-            const notice = document.getElementById("downloadProgressNotice");
-            const btn = document.getElementById("btnDownloadAllToFolder");
-
-            // វិធីទី ១៖ File System Access API លើកុំព្យូទ័រ (Google Chrome / Edge)
-            if (window.showDirectoryPicker) {
-                try {
-                    const dirHandle = await window.showDirectoryPicker();
-                    btn.disabled = true;
-                    notice.classList.remove("hidden");
-
-                    for (let i = 0; i < completedDownloadList.length; i++) {
-                        const item = completedDownloadList[i];
-                        notice.innerText = `កំពុងទាញយក (${i + 1}/${completedDownloadList.length}): ${item.name}...`;
-
-                        const response = await fetch(item.url);
-                        const blob = await response.blob();
-
-                        const fileHandle = await dirHandle.getFileHandle(item.name, { create: true });
-                        const writable = await fileHandle.createWritable();
-                        await writable.write(blob);
-                        await writable.close();
-                    }
-
-                    notice.innerText = `✓ បានរក្សាទុកវីដេអូទាំងអស់ចូល Folder ជោគជ័យ!`;
-                    notice.className = "text-[11px] text-emerald-400 font-bold text-center mt-1";
-                    btn.disabled = false;
-                    alert("បានទាញយក និងរក្សាទុកវីដេអូទាំងអស់ចូលក្នុង Folder របស់អ្នកជោគជ័យ ១០០%!");
-                    return;
-                } catch (err) {
-                    if (err.name === 'AbortError') return;
-                    console.warn("DirectoryPicker error, fallback to browser download:", err);
-                }
-            }
-
-            // វិធីទី ២៖ Fallback លើទូរសព្ទដៃ ឬ Browser ផ្សេងៗ (Download ផ្ទាល់)
-            notice.classList.remove("hidden");
-            notice.innerText = "កំពុងចាប់ផ្ដើមទាញយកវីដេអូទាំងអស់...";
-            btn.disabled = true;
 
             for (let i = 0; i < completedDownloadList.length; i++) {
                 const item = completedDownloadList[i];
@@ -1009,9 +896,6 @@
                 document.body.removeChild(a);
                 await new Promise(r => setTimeout(r, 600));
             }
-
-            btn.disabled = false;
-            notice.innerText = `✓ បានចាប់ផ្តើមទាញយកវីដេអូទាំងអស់រួចរាល់!`;
         }
 
         function changeAspect(ratio) {
@@ -1025,8 +909,8 @@
                 b169.className = "px-2 py-0.5 rounded text-slate-400";
             } else {
                 box.className = "w-full aspect-video max-h-56 bg-black rounded-lg overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto";
-                b169.className = "px-2 py-0.5 rounded bg-cyan-600/40 text-cyan-300 font-bold";
-                b916.className = "px-2 py-0.5 rounded text-slate-400";
+                b916.className = "px-2 py-0.5 rounded bg-cyan-600/40 text-cyan-300 font-bold";
+                b169.className = "px-2 py-0.5 rounded text-slate-400";
             }
         }
 
