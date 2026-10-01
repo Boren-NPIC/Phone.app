@@ -48,7 +48,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Final Stable", version="1200.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - MWAPI Cloud Engine", version="1300.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -231,8 +231,7 @@ def get_shared_whisper():
         if WhisperModel:
             try:
                 GLOBAL_WHISPER_INSTANCE = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2, num_workers=1)
-            except Exception as e:
-                print(f"[!] Faster-whisper offline: {e}")
+            except Exception:
                 GLOBAL_WHISPER_INSTANCE = None
     return GLOBAL_WHISPER_INSTANCE
 
@@ -250,60 +249,57 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
-# មុខងារស្ដាប់សំឡេងតាម Cloud API ឥតគិតថ្លៃ (Groq Whisper-large-v3) ដំណើរការបាន ១០០% លើ Render
-def transcribe_audio_cloud(audio_file_path: Path, cloud_type: str, cloud_key: str, lang: str = "auto"):
+# STT ឆ្លាតវៃតាម MWAPI / OpenAI endpoint
+def transcribe_audio_cloud(audio_file_path: Path, cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", lang: str = "auto"):
     sub_segments = []
-    
-    # កំណត់ Default Groq Key បើមិនទាន់បានដាក់
     api_key = cloud_key.strip()
-    if not api_key and cloud_type == "cloud_groq":
+    if not api_key:
         return []
 
-    if cloud_key:
-        try:
-            boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
-            data = bytearray()
-            def add_field(name, val):
-                data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
+    try:
+        boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
+        data = bytearray()
+        def add_field(name, val):
+            data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
 
-            model_name = "whisper-large-v3" if "groq" in cloud_type else "whisper-1"
-            endpoint = "https://api.groq.com/openai/v1/audio/transcriptions" if "groq" in cloud_type else "https://api.openai.com/v1/audio/transcriptions"
+        add_field("model", "whisper-1")
+        add_field("response_format", "verbose_json")
+        if lang != "auto":
+            add_field("language", lang)
 
-            add_field("model", model_name)
-            add_field("response_format", "verbose_json")
-            if lang != "auto":
-                add_field("language", lang)
+        filename = audio_file_path.name
+        with open(audio_file_path, "rb") as f:
+            file_bytes = f.read()
 
-            filename = audio_file_path.name
-            with open(audio_file_path, "rb") as f:
-                file_bytes = f.read()
+        data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: audio/wav\r\n\r\n'.encode('utf-8'))
+        data.extend(file_bytes)
+        data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
 
-            data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: audio/wav\r\n\r\n'.encode('utf-8'))
-            data.extend(file_bytes)
-            data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
-
-            req = urllib.request.Request(
-                endpoint,
-                data=data,
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
-            )
-            with urllib.request.urlopen(req, timeout=35) as resp:
-                res_data = json.loads(resp.read().decode('utf-8'))
-                for seg in res_data.get("segments", []):
-                    t = seg.get("text", "").strip()
-                    if t:
-                        sub_segments.append({
-                            "start": round(seg.get("start", 0.0), 2),
-                            "end": round(seg.get("end", 0.0), 2),
-                            "text": t
-                        })
+        url = f"{endpoint_base.rstrip('/')}/v1/audio/transcriptions"
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
+        )
+        with urllib.request.urlopen(req, timeout=40) as resp:
+            res_data = json.loads(resp.read().decode('utf-8'))
+            for seg in res_data.get("segments", []):
+                t = seg.get("text", "").strip()
+                if t:
+                    sub_segments.append({
+                        "start": round(seg.get("start", 0.0), 2),
+                        "end": round(seg.get("end", 0.0), 2),
+                        "text": t
+                    })
+            if sub_segments:
                 return sub_segments
-        except Exception as e:
-            print(f"[!] Cloud Speech-to-Text Error: {e}")
+    except Exception as e:
+        print(f"[!] MWAPI Whisper Error: {e}")
 
     return sub_segments
 
-def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", cloud_type: str = "", cloud_key: str = "") -> List[str]:
+# បកប្រែតាម MWAPI (គាំទ្រ GPT-4o-mini / Claude 3.5 Sonnet)
+def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
     if not texts:
         return []
 
@@ -317,7 +313,7 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
         "3. Output MUST be ONLY a strict JSON array of translated Khmer strings."
     )
 
-    if cloud_type == "cloud_openai" and cloud_key:
+    if cloud_key:
         try:
             req_data = {
                 "model": "gpt-4o-mini",
@@ -327,46 +323,23 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
                 ],
                 "temperature": 0.2
             }
+            url = f"{endpoint_base.rstrip('/')}/v1/chat/completions"
             req = urllib.request.Request(
-                "https://api.openai.com/v1/chat/completions",
+                url,
                 data=json.dumps(req_data).encode("utf-8"),
                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:
                 res_json = json.loads(resp.read().decode("utf-8"))
                 match = re.search(r'\[.*\]', res_json["choices"][0]["message"]["content"].strip(), re.DOTALL)
                 if match:
                     parsed = json.loads(match.group(0))
                     if len(parsed) == len(texts):
                         return [str(p) for p in parsed]
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[!] MWAPI Translation Error: {e}")
 
-    if (cloud_type == "cloud_groq" or not cloud_type) and cloud_key:
-        try:
-            req_data = {
-                "model": "llama-3.3-70b-versatile",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": json.dumps(texts, ensure_ascii=False)}
-                ],
-                "temperature": 0.2
-            }
-            req = urllib.request.Request(
-                "https://api.groq.com/openai/v1/chat/completions",
-                data=json.dumps(req_data).encode("utf-8"),
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                res_json = json.loads(resp.read().decode("utf-8"))
-                match = re.search(r'\[.*\]', res_json["choices"][0]["message"]["content"].strip(), re.DOTALL)
-                if match:
-                    parsed = json.loads(match.group(0))
-                    if len(parsed) == len(texts):
-                        return [str(p) for p in parsed]
-        except Exception:
-            pass
-
+    # Fallback to Google Translation API Free
     results = []
     src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
     for txt in texts:
@@ -377,8 +350,8 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
         translated = ""
         try:
             encoded = urllib.parse.quote(clean)
-            url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            gurl = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
+            req = urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=3.0) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 if data and data[0]:
@@ -532,8 +505,9 @@ async def delete_single_episode_api(episode_id: str, session_id: str = "", sid: 
 async def transcribe_episode(
     episode_id: str = Form(...),
     session_id: str = Form(""),
-    model_size: str = Form("cloud_groq"),
+    model_size: str = Form("mwapi"),
     cloud_key: str = Form(""),
+    api_endpoint: str = Form("https://api.mwapi.dev"),
     lang: str = Form("auto"),
     speaker_mode: str = Form("auto"),
     sid: Optional[str] = Cookie(None)
@@ -543,7 +517,7 @@ async def transcribe_episode(
     user_db = load_user_db(db_file)
 
     if episode_id not in user_db:
-        raise HTTPException(status_code=404, detail="Episode not found")
+        raise HTTPException(status_code=404, detail="រកមិនឃើញភាគនេះទេ")
 
     ep = user_db[episode_id]
     ep["status"] = "transcribing"
@@ -556,7 +530,7 @@ async def transcribe_episode(
 
     sub_segments = []
 
-    # ១. ស្រង់ Subtitle Stream ចេញពីសាច់វីដេអូជាមុន
+    # ១. ស្រង់ Subtitle Stream បើមាន
     srt_out_path = uploads_dir / f"{episode_id}_sub.srt"
     try:
         subprocess.run([
@@ -573,7 +547,7 @@ async def transcribe_episode(
     except Exception:
         pass
 
-    # ២. បំបែកសំឡេង Mono 16kHz
+    # ២. បំបែកសំឡេង
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
@@ -581,11 +555,11 @@ async def transcribe_episode(
         str(audio_path)
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # ៣. ស្ដាប់សំឡេងតាម Cloud AI (Groq / OpenAI) ជាអាទិភាព
+    # ៣. ដំណើរការ STT តាម MWAPI Cloud (ស្ដាប់ឮសំឡេងចិន/អង់គ្លេសពិតប្រាកដ)
     if not sub_segments and cloud_key:
-        sub_segments = transcribe_audio_cloud(audio_path, model_size, cloud_key, lang)
+        sub_segments = transcribe_audio_cloud(audio_path, cloud_key=cloud_key, endpoint_base=api_endpoint, lang=lang)
 
-    # ៤. សាកល្បង Whisper Local (ប្រសិនបើមាន CPU/RAM គ្រប់គ្រាន់)
+    # ៤. សាកល្បង Local Whisper
     if not sub_segments:
         with WHISPER_LOCK:
             whisper = get_shared_whisper()
@@ -610,9 +584,9 @@ async def transcribe_episode(
                 except Exception as e:
                     print(f"[!] Local Whisper Offline: {e}")
 
-    # ៥. បកប្រែជាភាសាខ្មែរតាម AI
+    # ៥. បកប្រែជាភាសាខ្មែរតាម MWAPI (GPT-4o-mini)
     orig_texts = [s["text"] for s in sub_segments]
-    khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
+    khmer_translations = translate_batch_with_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
 
     dialogues = []
     last_spk = "piseth"

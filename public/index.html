@@ -68,8 +68,8 @@
                     <span class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">KhmerDub Studio
                         Pro</span>
                     <span
-                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">MULTI-LANG
-                        PRO</span>
+                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">MWAPI
+                        CLOUD</span>
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">បកប្រែចិន & អង់គ្លេស •
                     ត្រូវមាត់តួអង្គ ១០០% • Multi-User Cloud</p>
@@ -161,7 +161,8 @@
                 <div class="flex items-center gap-2 text-[10px] text-slate-400">
                     <span id="currentDialogueCount">0 ឃ្លា</span>
                     <span class="hidden sm:inline text-studio-border">|</span>
-                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">AI Cloud Sync</strong></span>
+                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">MWAPI / OpenAI
+                            Sync</strong></span>
                 </div>
             </div>
 
@@ -222,21 +223,23 @@
                         <i data-lucide="zap" class="w-3 h-3 text-rose-400"></i> AI Transcribe & Translation Engine
                     </span>
 
-                    <select id="selModelSize" onchange="toggleCloudKeyInput()"
+                    <select id="selModelSize"
                         class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
-                        <option value="cloud_groq" selected>⚡ Groq Cloud (លឿនបំផុត - ឥតគិតថ្លៃ)</option>
-                        <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
-                        <option value="tiny">⚡ Tiny Model (ស្រាលលើ Cloud)</option>
+                        <option value="mwapi" selected>⚡ MWAPI Cloud (Whisper + GPT-4o-mini)</option>
                     </select>
 
-                    <div id="boxCloudKey" class="space-y-1 pt-1.5 border-t border-rose-500/30">
+                    <div class="space-y-1 pt-1.5 border-t border-rose-500/30">
                         <div class="flex items-center justify-between">
-                            <span id="lblKeyName" class="text-[9px] text-rose-300 font-semibold">Groq API Key
-                                (gsk_...):</span>
-                            <a href="https://console.groq.com/keys" target="_blank"
-                                class="text-[8px] text-cyan-400 underline">យក Key ឥតគិតថ្លៃ</a>
+                            <span class="text-[9px] text-rose-300 font-semibold">API Endpoint:</span>
                         </div>
-                        <input type="password" id="txtCloudKey" placeholder="gsk_..." oninput="saveCloudKey(this.value)"
+                        <input type="text" id="txtApiEndpoint" value="https://api.mwapi.dev"
+                            oninput="saveApiEndpoint(this.value)"
+                            class="w-full bg-studio-base border border-rose-400/60 rounded px-2 py-1 text-slate-300 text-[10px] outline-none font-mono">
+
+                        <div class="flex items-center justify-between pt-1">
+                            <span class="text-[9px] text-rose-300 font-semibold">MWAPI Key (sk-...):</span>
+                        </div>
+                        <input type="password" id="txtCloudKey" placeholder="sk-..." oninput="saveCloudKey(this.value)"
                             class="w-full bg-studio-base border border-rose-400 rounded px-2 py-1 text-white text-[10px] outline-none font-mono">
                     </div>
                 </div>
@@ -411,29 +414,14 @@
         function updateSpeedVal(val) { document.getElementById("lblSpeedVal").innerText = `${parseFloat(val).toFixed(2)}x`; }
         function updateDubVal(val) { document.getElementById("dubDisplay").innerText = `${Math.round(val * 100)}%`; }
 
-        function toggleCloudKeyInput() {
-            const modelVal = document.getElementById("selModelSize").value;
-            const box = document.getElementById("boxCloudKey");
-            const keyInput = document.getElementById("txtCloudKey");
-            const lbl = document.getElementById("lblKeyName");
+        function saveApiEndpoint(val) { localStorage.setItem("mwapi_endpoint", val.trim()); }
+        function saveCloudKey(val) { localStorage.setItem("mwapi_key", val.trim()); }
 
-            if (modelVal === "cloud_openai") {
-                box.classList.remove("hidden");
-                lbl.innerText = "OpenAI API Key (sk-...):";
-                keyInput.value = localStorage.getItem("openai_key") || "";
-            } else if (modelVal === "cloud_groq") {
-                box.classList.remove("hidden");
-                lbl.innerText = "Groq API Key (gsk_...):";
-                keyInput.value = localStorage.getItem("groq_key") || "";
-            } else {
-                box.classList.add("hidden");
-            }
-        }
-
-        function saveCloudKey(val) {
-            const modelVal = document.getElementById("selModelSize").value;
-            if (modelVal === "cloud_openai") localStorage.setItem("openai_key", val.trim());
-            if (modelVal === "cloud_groq") localStorage.setItem("groq_key", val.trim());
+        function loadSavedKeys() {
+            const ep = localStorage.getItem("mwapi_endpoint") || "https://api.mwapi.dev";
+            const k = localStorage.getItem("mwapi_key") || "";
+            document.getElementById("txtApiEndpoint").value = ep;
+            document.getElementById("txtCloudKey").value = k;
         }
 
         async function onFilesChosen(event) {
@@ -578,8 +566,9 @@
             const fd = new FormData();
             fd.append("episode_id", ep.id);
             fd.append("session_id", currentSessionId);
-            fd.append("model_size", document.getElementById("selModelSize").value || "cloud_groq");
+            fd.append("model_size", "mwapi");
             fd.append("cloud_key", document.getElementById("txtCloudKey").value || "");
+            fd.append("api_endpoint", document.getElementById("txtApiEndpoint").value || "https://api.mwapi.dev");
             fd.append("lang", document.getElementById("selSourceLang").value || "auto");
             fd.append("speaker_mode", document.getElementById("selSpeakerMode").value || "auto");
 
@@ -602,11 +591,17 @@
 
         async function runTranscribeSingle() {
             if (activeIndex < 0) return;
+            const keyVal = document.getElementById("txtCloudKey").value.trim();
+            if (!keyVal) {
+                alert("សូម Paste MWAPI Key (sk-...) របស់អ្នកចូលជាមុនសិន!");
+                return;
+            }
+
             const btn = document.getElementById("btnTranscribe");
             const txt = document.getElementById("txtTranscribe");
 
             btn.disabled = true;
-            txt.innerText = "⚡ កំពុង Transcribe...";
+            txt.innerText = "⚡ កំពុង Transcribe តាម MWAPI...";
 
             try {
                 await executeTranscribe(activeIndex);
@@ -620,6 +615,12 @@
         }
 
         async function runTranscribeAllEpisodes() {
+            const keyVal = document.getElementById("txtCloudKey").value.trim();
+            if (!keyVal) {
+                alert("សូម Paste MWAPI Key (sk-...) របស់អ្នកចូលជាមុនសិន!");
+                return;
+            }
+
             const btn = document.getElementById("btnTranscribeAll");
             const txt = document.getElementById("txtTranscribeAll");
             btn.disabled = true;
@@ -955,8 +956,8 @@
 
         window.addEventListener("DOMContentLoaded", () => {
             if (window.lucide) lucide.createIcons();
+            loadSavedKeys();
             fetchEpisodes();
-            toggleCloudKeyInput();
         });
     </script>
 </body>
