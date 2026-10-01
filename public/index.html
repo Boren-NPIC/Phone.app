@@ -225,7 +225,7 @@
                     <select id="selModelSize" onchange="toggleCloudKeyInput()"
                         class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
                         <option value="tiny" selected>⚡ Tiny Model (ស្រាល លឿនបំផុត - ណែនាំលើ Cloud)</option>
-                        <option value="cloud_openai">☁ OpenAI Cloud (GPT-4o-mini)</option>
+                        <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
                         <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
                     </select>
 
@@ -457,7 +457,6 @@
                 episodeList = Object.values(data);
                 renderEpisodeSidebar();
 
-                // ធ្វើសមកាលកម្មទិន្នន័យឃ្លាដែល Transcribe រួចមកបង្ហាញលើអេក្រង់ភ្លាម
                 if (activeIndex >= 0 && episodeList[activeIndex]) {
                     renderDialogues(episodeList[activeIndex].dialogues || []);
                     renderTimelineTracks(episodeList[activeIndex].dialogues || []);
@@ -561,7 +560,6 @@
                 emptyNotice.classList.add("hidden");
             }
 
-            // Render បង្ហាញ dialogues ភ្លាមៗ
             renderDialogues(ep.dialogues || []);
             renderTimelineTracks(ep.dialogues || []);
             if (window.lucide) lucide.createIcons();
@@ -586,14 +584,11 @@
             }
 
             const data = await res.json();
-
-            // រក្សាទុកទិន្នន័យ dialogues ចូលក្នុង episode
             ep.dialogues = data.dialogues || [];
             ep.status = "transcribed";
             episodeList[idx].dialogues = data.dialogues || [];
             episodeList[idx].status = "transcribed";
 
-            // បង្ហាញអក្សរភាសាខ្មែរភ្លាមៗនៅលើផ្ទាំងកណ្តាល
             renderDialogues(ep.dialogues);
             renderTimelineTracks(ep.dialogues);
             renderEpisodeSidebar();
