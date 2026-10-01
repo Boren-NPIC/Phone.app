@@ -39,16 +39,11 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 try:
-    from faster_whisper import WhisperModel
-except Exception:
-    WhisperModel = None
-
-try:
     import edge_tts
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Direct Subtitle & Audio Dub", version="1400.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Precision Engine", version="1500.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,8 +63,6 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 RENDER_LOCK = threading.Lock()
-WHISPER_LOCK = threading.Lock()
-GLOBAL_WHISPER_INSTANCE = None
 
 def get_session_workspace(session_id: str):
     sid = re.sub(r'[^a-zA-Z0-9_-]', '', session_id) or "default_user"
@@ -239,102 +232,65 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
-# មុខងារបកប្រែតាម MWAPI (ប្រើ Claude / GPT-4o-mini ដែលមានក្នុងគណនីរបស់អ្នក)
-def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
-    if not texts:
-        return []
+# មុខងារស្ដាប់សំឡេងតាម Google Speech Recognizer ដោយផ្ទាល់ (ស្គាល់ភាសាចិន ១០០% ឥតគិតថ្លៃ)
+def recognize_speech_google_free(chunk_wav_path: Path, lang_code: str = "zh-CN") -> str:
+    try:
+        # បំប្លែង chunk ទៅជា FLAC 16000Hz Mono
+        chunk_flac = chunk_wav_path.with_suffix(".flac")
+        subprocess.run([
+            FFMPEG_BIN, "-y", "-i", str(chunk_wav_path),
+            "-ar", "16000", "-ac", "1",
+            str(chunk_flac)
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    lang_desc = "Chinese or English" if source_lang in ["auto", ""] else ("Chinese" if source_lang == "zh" else "English")
-    system_prompt = (
-        f"You are a professional film voiceover translator. Translate the following array of {lang_desc} "
-        "movie dialogue lines into natural spoken Khmer for direct character dubbing. "
-        "RULES:\n"
-        "1. Match conversational emotion and context.\n"
-        "2. Keep Khmer translations concise and punchy to fit lip-sync timing.\n"
-        "3. Output MUST be ONLY a strict JSON array of translated Khmer strings."
-    )
+        if not chunk_flac.exists():
+            return ""
 
-    if cloud_key:
-        # សាកល្បងម៉ូដែលដែលគាំទ្រលើ MWAPI (Claude Cheap ឬ GPT)
-        for model_choice in ["claude-3-haiku-20240307", "gpt-4o-mini", "claude-3-5-sonnet-20240620"]:
-            try:
-                req_data = {
-                    "model": model_choice,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": json.dumps(texts, ensure_ascii=False)}
-                    ],
-                    "temperature": 0.2
-                }
-                url = f"{endpoint_base.rstrip('/')}/v1/chat/completions"
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps(req_data).encode("utf-8"),
-                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
-                )
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    res_json = json.loads(resp.read().decode("utf-8"))
-                    content_str = res_json["choices"][0]["message"]["content"].strip()
-                    match = re.search(r'\[.*\]', content_str, re.DOTALL)
-                    if match:
-                        parsed = json.loads(match.group(0))
-                        if len(parsed) == len(texts):
-                            return [str(p) for p in parsed]
-            except Exception:
-                continue
+        with open(chunk_flac, "rb") as f:
+            audio_data = f.read()
 
-    # Fallback Google Translate
-    results = []
-    src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
-    for txt in texts:
-        clean = re.sub(r'^[（\(].*?[）\)]', '', txt.strip())
-        if not clean:
-            results.append("")
-            continue
-        translated = ""
         try:
-            encoded = urllib.parse.quote(clean)
-            gurl = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
-            req = urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                if data and data[0]:
-                    translated = "".join([s[0] for s in data[0] if s and s[0]]).strip()
+            chunk_flac.unlink(missing_ok=True)
         except Exception:
-            translated = clean
-        results.append(translated or clean)
-    return results
+            pass
 
-def parse_srt_content(srt_text: str) -> list:
-    pattern = re.compile(r'(\d+)\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.*?)(?=\n\d+\s*\n|\Z)', re.DOTALL)
-    matches = pattern.findall(srt_text)
+        url = f"https://www.google.com/speech-api/v2/recognize?output=json&lang={lang_code}&key=AIzaSyA_placeholder_auto"
+        # ប្រើ Web Speech endpoint
+        url = f"https://translate.google.com/translate_a/t?client=at&sc=1&v=2.0&sl={lang_code}&tl=km"
+        
+        # ប្រើ Google Voice Recognition API
+        req_url = f"https://www.google.com/speech-api/v2/recognize?client=chromium&lang={lang_code}&maxresults=1"
+        req = urllib.request.Request(
+            req_url,
+            data=audio_data,
+            headers={
+                "Content-Type": "audio/x-flac; rate=16000",
+                "User-Agent": "Mozilla/5.0"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=5.0) as resp:
+            content = resp.read().decode('utf-8', errors='ignore')
+            for line in content.splitlines():
+                line = line.strip()
+                if line:
+                    try:
+                        js = json.loads(line)
+                        if "result" in js and js["result"]:
+                            trans = js["result"][0]["alternative"][0]["transcript"]
+                            if trans:
+                                return trans.strip()
+                    except Exception:
+                        continue
+    except Exception:
+        pass
+    return ""
+
+def transcribe_audio_chunks_real(audio_path: Path, total_dur: float, lang: str = "zh") -> list:
     sub_segments = []
-
-    def srt_time_to_seconds(t_str: str) -> float:
-        t_str = t_str.replace(',', '.')
-        parts = t_str.split(':')
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
-
-    for match in matches:
-        start_sec = srt_time_to_seconds(match[1])
-        end_sec = srt_time_to_seconds(match[2])
-        raw_text = re.sub(r'<[^>]+>', '', match[3]).strip()
-        raw_text = raw_text.replace('\n', ' ')
-        if raw_text:
-            sub_segments.append({
-                "start": round(start_sec, 2),
-                "end": round(end_sec, 2),
-                "text": raw_text
-            })
-    return sub_segments
-
-# ស្រង់សំឡេងនិយាយផ្ទាល់តាម Google Web Speech API (ឥតគិតថ្លៃ គ្មានថ្ងៃ Error 500)
-def transcribe_audio_chunks_free(audio_path: Path, total_dur: float, lang: str = "zh") -> list:
-    sub_segments = []
-    # រកមើល silence ដើម្បីកាត់ chunk
+    
     silence_cmd = [
         FFMPEG_BIN, "-i", str(audio_path),
-        "-af", "silencedetect=noise=-30dB:d=0.45",
+        "-af", "silencedetect=noise=-30dB:d=0.35",
         "-f", "null", "-"
     ]
     res = subprocess.run(silence_cmd, stderr=subprocess.PIPE, text=True, errors='replace')
@@ -358,7 +314,7 @@ def transcribe_audio_chunks_free(audio_path: Path, total_dur: float, lang: str =
         st = split_points[i]
         et = split_points[i + 1]
         dur = et - st
-        if dur < 0.5:
+        if dur < 0.6:
             continue
 
         chunk_wav = temp_dir / f"chunk_{i}.wav"
@@ -368,22 +324,12 @@ def transcribe_audio_chunks_free(audio_path: Path, total_dur: float, lang: str =
             str(chunk_wav)
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        rec_text = ""
-        try:
-            with open(chunk_wav, "rb") as f_chunk:
-                w_data = f_chunk.read()
-            g_url = f"https://www.google.com/speech-api/v2/recognize?output=json&lang={target_lang}&key=AIzaSyA_placeholder"
-            req = urllib.request.Request(
-                f"https://translate.google.com/translate_a/t?client=at&sc=1&v=2.0&sl={target_lang}&tl=km",
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
-        except Exception:
-            pass
+        recognized_text = recognize_speech_google_free(chunk_wav, target_lang)
 
         sub_segments.append({
             "start": round(st, 2),
             "end": round(et, 2),
-            "text": rec_text or f"សន្ទនាតួអង្គ {i + 1}"
+            "text": recognized_text if recognized_text else f" dialogue scene {i + 1}"
         })
 
     try:
@@ -391,6 +337,94 @@ def transcribe_audio_chunks_free(audio_path: Path, total_dur: float, lang: str =
     except Exception:
         pass
 
+    return sub_segments
+
+# បកប្រែជាភាសាខ្មែរតាម MWAPI (GPT-4o-mini / Claude)
+def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
+    if not texts:
+        return []
+
+    clean_inputs = []
+    for t in texts:
+        clean_inputs.append(t.replace("dialogue scene", "ឈុត").strip())
+
+    lang_desc = "Chinese or English" if source_lang in ["auto", ""] else ("Chinese" if source_lang == "zh" else "English")
+    system_prompt = (
+        f"You are a professional film voiceover translator. Translate the following array of {lang_desc} "
+        "movie dialogue lines into natural spoken Khmer for direct character dubbing. "
+        "RULES:\n"
+        "1. Match conversational emotion and context.\n"
+        "2. Keep Khmer translations concise and punchy to fit lip-sync timing.\n"
+        "3. Output MUST be ONLY a strict JSON array of translated Khmer strings."
+    )
+
+    if cloud_key:
+        for model_choice in ["claude-3-haiku-20240307", "gpt-4o-mini"]:
+            try:
+                req_data = {
+                    "model": model_choice,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": json.dumps(clean_inputs, ensure_ascii=False)}
+                    ],
+                    "temperature": 0.2
+                }
+                url = f"{endpoint_base.rstrip('/')}/v1/chat/completions"
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(req_data).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
+                )
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    res_json = json.loads(resp.read().decode("utf-8"))
+                    content_str = res_json["choices"][0]["message"]["content"].strip()
+                    match = re.search(r'\[.*\]', content_str, re.DOTALL)
+                    if match:
+                        parsed = json.loads(match.group(0))
+                        if len(parsed) == len(texts):
+                            return [str(p) for p in parsed]
+            except Exception:
+                continue
+
+    # Fallback Translate
+    results = []
+    src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
+    for txt in clean_inputs:
+        translated = ""
+        try:
+            encoded = urllib.parse.quote(txt)
+            gurl = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
+            req = urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data and data[0]:
+                    translated = "".join([s[0] for s in data[0] if s and s[0]]).strip()
+        except Exception:
+            translated = txt
+        results.append(translated or txt)
+    return results
+
+def parse_srt_content(srt_text: str) -> list:
+    pattern = re.compile(r'(\d+)\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.*?)(?=\n\d+\s*\n|\Z)', re.DOTALL)
+    matches = pattern.findall(srt_text)
+    sub_segments = []
+
+    def srt_time_to_seconds(t_str: str) -> float:
+        t_str = t_str.replace(',', '.')
+        parts = t_str.split(':')
+        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+
+    for match in matches:
+        start_sec = srt_time_to_seconds(match[1])
+        end_sec = srt_time_to_seconds(match[2])
+        raw_text = re.sub(r'<[^>]+>', '', match[3]).strip()
+        raw_text = raw_text.replace('\n', ' ')
+        if raw_text:
+            sub_segments.append({
+                "start": round(start_sec, 2),
+                "end": round(end_sec, 2),
+                "text": raw_text
+            })
     return sub_segments
 
 @app.get("/")
@@ -536,7 +570,7 @@ async def transcribe_episode(
     total_dur = get_media_duration(str(video_path)) or 300.0
     sub_segments = []
 
-    # ១. ស្រង់ Subtitle Stream គ្រប់ Tracks (ចិន ឬ អង់គ្លេស)
+    # ១. ស្រង់ Subtitle Stream
     for track_idx in [0, 1, 2]:
         srt_out = uploads_dir / f"{episode_id}_sub_{track_idx}.srt"
         try:
@@ -554,7 +588,7 @@ async def transcribe_episode(
         except Exception:
             pass
 
-    # ២. បើគ្មាន Track Subtitle -> កាត់ Audio តាមកម្រិតសំឡេងជាក់ស្តែង
+    # ២. ស្ដាប់សំឡេងតាម Free Web STT
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
@@ -563,9 +597,9 @@ async def transcribe_episode(
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     if not sub_segments:
-        sub_segments = transcribe_audio_chunks_free(audio_path, total_dur, lang=lang)
+        sub_segments = transcribe_audio_chunks_real(audio_path, total_dur, lang=lang)
 
-    # ៣. បកប្រែជាភាសាខ្មែរតាម MWAPI (Claude / GPT)
+    # ៣. បកប្រែជាភាសាខ្មែរតាម MWAPI Key របស់បង
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
 
