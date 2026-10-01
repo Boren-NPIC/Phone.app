@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor
 
-# កំណត់ស្វែងរក FFmpeg binary executable
 FFMPEG_BIN = "ffmpeg"
 try:
     import imageio_ffmpeg
@@ -49,7 +48,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Precision Multi-User Engine", version="900.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Real STT Engine", version="1000.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -251,6 +250,100 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
+# មុខងារ Transcribe តាម Cloud API (លឿន និងចាប់សំឡេងពិតប្រាកដ)
+def transcribe_audio_cloud(audio_file_path: Path, cloud_type: str, cloud_key: str, lang: str = "auto"):
+    sub_segments = []
+    
+    # បើមាន Groq API Key
+    if (cloud_type == "cloud_groq" or not cloud_type) and cloud_key:
+        try:
+            boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
+            data = bytearray()
+            
+            def add_field(name, val):
+                data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
+
+            add_field("model", "whisper-large-v3")
+            add_field("response_format", "verbose_json")
+            if lang != "auto":
+                add_field("language", lang)
+
+            filename = audio_file_path.name
+            with open(audio_file_path, "rb") as f:
+                file_bytes = f.read()
+
+            data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: audio/wav\r\n\r\n'.encode('utf-8'))
+            data.extend(file_bytes)
+            data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
+
+            req = urllib.request.Request(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {cloud_key.strip()}",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                res_data = json.loads(resp.read().decode('utf-8'))
+                for seg in res_data.get("segments", []):
+                    t = seg.get("text", "").strip()
+                    if t:
+                        sub_segments.append({
+                            "start": round(seg.get("start", 0.0), 2),
+                            "end": round(seg.get("end", 0.0), 2),
+                            "text": t
+                        })
+                return sub_segments
+        except Exception as e:
+            print(f"[!] Groq Audio Transcribe Error: {e}")
+
+    # បើមាន OpenAI API Key
+    if cloud_type == "cloud_openai" and cloud_key:
+        try:
+            boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
+            data = bytearray()
+
+            def add_field(name, val):
+                data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
+
+            add_field("model", "whisper-1")
+            add_field("response_format", "verbose_json")
+            if lang != "auto":
+                add_field("language", lang)
+
+            filename = audio_file_path.name
+            with open(audio_file_path, "rb") as f:
+                file_bytes = f.read()
+
+            data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: audio/wav\r\n\r\n'.encode('utf-8'))
+            data.extend(file_bytes)
+            data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
+
+            req = urllib.request.Request(
+                "https://api.openai.com/v1/audio/transcriptions",
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {cloud_key.strip()}",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                res_data = json.loads(resp.read().decode('utf-8'))
+                for seg in res_data.get("segments", []):
+                    t = seg.get("text", "").strip()
+                    if t:
+                        sub_segments.append({
+                            "start": round(seg.get("start", 0.0), 2),
+                            "end": round(seg.get("end", 0.0), 2),
+                            "text": t
+                        })
+                return sub_segments
+        except Exception as e:
+            print(f"[!] OpenAI Audio Transcribe Error: {e}")
+
+    return sub_segments
+
 def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", cloud_type: str = "", cloud_key: str = "") -> List[str]:
     if not texts:
         return []
@@ -337,7 +430,6 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
     return results
 
 def parse_srt_content(srt_text: str) -> list:
-    """មុខងារបំប្លែង SRT Subtitle ទៅជា Timestamp និងអត្ថបទសន្ទនា"""
     pattern = re.compile(r'(\d+)\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.*?)(?=\n\d+\s*\n|\Z)', re.DOTALL)
     matches = pattern.findall(srt_text)
     sub_segments = []
@@ -499,13 +591,9 @@ async def transcribe_episode(
     save_user_db(db_file, user_db)
 
     video_path = ep["path"]
-    total_dur = get_media_duration(str(video_path))
-    if total_dur <= 0.5:
-        total_dur = 300.0
-
     sub_segments = []
 
-    # ១. សាកល្បងស្រង់ Subtitle Stream ពីក្នុងវីដេអូជាមុន
+    # ១. ស្រង់ Subtitle Stream បើមាន
     srt_out_path = uploads_dir / f"{episode_id}_sub.srt"
     try:
         subprocess.run([
@@ -522,15 +610,20 @@ async def transcribe_episode(
     except Exception:
         pass
 
-    # ២. បើគ្មាន Soft Subtitle -> សាកល្បង Whisper Audio Speech
-    if not sub_segments:
-        audio_path = uploads_dir / f"{episode_id}_audio.wav"
-        subprocess.run([
-            FFMPEG_BIN, "-y", "-i", str(video_path),
-            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-            str(audio_path)
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # ២. ស្រង់យកសំឡេងចេញពីវីដេអូ
+    audio_path = uploads_dir / f"{episode_id}_audio.wav"
+    subprocess.run([
+        FFMPEG_BIN, "-y", "-i", str(video_path),
+        "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+        str(audio_path)
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    # ៣. បើគ្មាន Soft Subtitle -> Transcribe តាម Cloud API (Groq/OpenAI) ជាអាទិភាពខ្ពស់
+    if not sub_segments and cloud_key:
+        sub_segments = transcribe_audio_cloud(audio_path, model_size, cloud_key, lang)
+
+    # ៤. បើគ្មាន Cloud API -> ដំណើរការ Faster-Whisper Local
+    if not sub_segments:
         with WHISPER_LOCK:
             whisper = get_shared_whisper()
             if whisper:
@@ -552,24 +645,9 @@ async def transcribe_episode(
                                 "text": txt
                             })
                 except Exception as e:
-                    print(f"[!] Whisper Error: {e}")
+                    print(f"[!] Local Whisper Error: {e}")
 
-    # ៣. ប្រសិនបើ Whisper រត់មិនចេញលើ Cloud -> បង្កើត Timeline Segment ជាស្វ័យប្រវត្តិ
-    if not sub_segments:
-        step = 3.5
-        curr = 0.0
-        c_idx = 1
-        while curr < total_dur:
-            end_t = min(curr + step, total_dur)
-            sub_segments.append({
-                "start": round(curr, 2),
-                "end": round(end_t, 2),
-                "text": f"ឈុតសន្ទនា {c_idx}"
-            })
-            curr += step
-            c_idx += 1
-
-    # ៤. បកប្រែជាភាសាខ្មែរតាម AI
+    # ៥. បកប្រែអត្ថបទដើមដែលស្រង់បានជាភាសាខ្មែរ
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
 
