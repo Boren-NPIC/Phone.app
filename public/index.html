@@ -225,7 +225,7 @@
                     <select id="selModelSize" onchange="toggleCloudKeyInput()"
                         class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
                         <option value="tiny" selected>⚡ Tiny Model (ស្រាល លឿនបំផុត - ណែនាំលើ Cloud)</option>
-                        <option value="cloud_openai">☁️️ OpenAI Cloud (GPT-4o-mini)</option>
+                        <option value="cloud_openai">☁ OpenAI Cloud (GPT-4o-mini)</option>
                         <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
                     </select>
 
@@ -329,8 +329,7 @@
 
                 <button onclick="splitCurrentDialogue()"
                     class="flex items-center gap-1 px-2.5 py-0.5 rounded bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 text-rose-200 text-[9px] font-semibold transition active:scale-95">
-                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i>
-                    <span>កាត់ (Split)</span>
+                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i> <span>កាត់ (Split)</span>
                 </button>
 
                 <button id="btnDeleteSelected" onclick="deleteSelectedClip()" disabled
@@ -548,6 +547,7 @@
 
             if (previewSrc) {
                 p.src = previewSrc;
+                p.load(); // ដោះស្រាយបញ្ហា loading វិល
                 p.classList.remove("hidden");
                 emptyNotice.classList.add("hidden");
             }

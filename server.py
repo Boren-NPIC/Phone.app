@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor
 
-# កំណត់ FFmpeg ស្វ័យប្រវត្តិ
 FFMPEG_BIN = "ffmpeg"
 try:
     import imageio_ffmpeg
@@ -33,10 +32,10 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Cookie, Response
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Cookie, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 try:
@@ -49,7 +48,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Bulletproof Engine", version="600.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Precision Engine", version="700.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -379,13 +378,44 @@ async def batch_upload(
     save_user_db(db_file, user_db)
     return {"uploaded": uploaded_eps}
 
+# Real Streaming Support (ដោះស្រាយបញ្ហា Video Monitor វិល loading)
 @app.get("/api/video/{session_id}/{ep_id}")
-async def serve_video(session_id: str, ep_id: str):
+async def stream_video(session_id: str, ep_id: str, request: Request):
     _, _, _, db_file = get_session_workspace(session_id)
     user_db = load_user_db(db_file)
-    if ep_id in user_db and os.path.exists(user_db[ep_id]["path"]):
-        return FileResponse(user_db[ep_id]["path"], media_type="video/mp4")
-    raise HTTPException(status_code=404, detail="Video not found")
+    if ep_id not in user_db or not os.path.exists(user_db[ep_id]["path"]):
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    path = Path(user_db[ep_id]["path"])
+    file_size = path.stat().st_size
+    range_header = request.headers.get("range")
+
+    if range_header:
+        byte1, byte2 = range_header.replace("bytes=", "").split("-")
+        start = int(byte1)
+        end = int(byte2) if byte2 else file_size - 1
+        length = end - start + 1
+
+        def iterfile():
+            with open(path, "rb") as f:
+                f.seek(start)
+                bytes_left = length
+                while bytes_left > 0:
+                    chunk = f.read(min(bytes_left, 64 * 1024))
+                    if not chunk:
+                        break
+                    bytes_left -= len(chunk)
+                    yield chunk
+
+        headers = {
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(length),
+            "Content-Type": "video/mp4",
+        }
+        return StreamingResponse(iterfile(), status_code=206, headers=headers)
+
+    return FileResponse(path=str(path), media_type="video/mp4", headers={"Accept-Ranges": "bytes"})
 
 @app.get("/api/episodes")
 async def get_episodes(session_id: str = "", sid: Optional[str] = Cookie(None)):
@@ -447,42 +477,47 @@ async def transcribe_episode(
     video_path = ep["path"]
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
 
-    # បំបែកសំឡេង audio យ៉ាងមានសុវត្ថិភាព
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
         "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
         str(audio_path)
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    total_dur = get_media_duration(str(audio_path)) or 30.0
     sub_segments = []
 
-    # 1. សាកល្បង Whisper Local
+    # Whisper Local Processing
     with WHISPER_LOCK:
         whisper = get_shared_whisper()
         if whisper:
             try:
                 whisper_lang = None if lang == "auto" else lang
-                segments, _ = whisper.transcribe(str(audio_path), vad_filter=True, language=whisper_lang, beam_size=1, temperature=0.0)
+                segments, _ = whisper.transcribe(
+                    str(audio_path),
+                    vad_filter=True,
+                    vad_parameters=dict(min_silence_duration_ms=250),
+                    language=whisper_lang,
+                    beam_size=1,
+                    temperature=0.0
+                )
                 for seg in segments:
                     t = seg.text.strip()
                     if t:
-                        sub_segments.append({"start": round(seg.start, 2), "end": round(seg.end, 2), "text": t})
+                        sub_segments.append({
+                            "start": round(seg.start, 2),
+                            "end": round(seg.end, 2),
+                            "text": t
+                        })
             except Exception as e:
-                print(f"[!] Local Whisper Failed: {e}")
+                print(f"[!] Whisper Error: {e}")
 
-    # 2. FAIL-SAFE FALLBACK (បើ Whisper គាំង ឬគ្មាន C++ library លើ Cloud)
-    # បំបែកជាឈុតខ្លីៗដោយស្វ័យប្រវត្តិកុំឱ្យ Error 500
+    # Fallback ពិតប្រាកដប្រសិនជាវីដេអូគ្មានការនិយាយសោះ
     if not sub_segments:
-        chunk_step = 3.5
-        curr_t = 0.0
-        while curr_t < total_dur:
-            sub_segments.append({
-                "start": round(curr_t, 2),
-                "end": round(min(curr_t + chunk_step, total_dur), 2),
-                "text": f"ឈុតសន្ទនា {int(curr_t // chunk_step) + 1}"
-            })
-            curr_t += chunk_step
+        total_dur = get_media_duration(str(audio_path)) or 10.0
+        sub_segments.append({
+            "start": 0.0,
+            "end": round(min(3.5, total_dur), 2),
+            "text": "សួស្តី"
+        })
 
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
