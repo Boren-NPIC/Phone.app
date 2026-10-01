@@ -11,9 +11,8 @@ import json
 import re
 from pathlib import Path
 from typing import List, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
-# រក FFmpeg ស្វ័យប្រវត្តិតាម imageio_ffmpeg បើម៉ាស៊ីនគ្មាន ffmpeg ក្នុង PATH
 try:
     import imageio_ffmpeg
     FFMPEG_BIN = imageio_ffmpeg.get_ffmpeg_exe()
@@ -26,10 +25,10 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Cookie, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 try:
@@ -42,11 +41,7 @@ try:
 except ImportError:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Cloud Optimized", version="340.0.0")
-
-@app.get('/favicon.ico', include_in_schema=False)
-async def favicon():
-    return Response(status_code=204)
+app = FastAPI(title="KhmerDub Studio Pro - Multi-User Cloud Architecture", version="400.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,42 +52,47 @@ app.add_middleware(
 )
 
 BASE_DIR = Path(__file__).resolve().parent
-WORKSPACE = BASE_DIR / "workspace"
-UPLOADS_DIR = WORKSPACE / "uploads"
-PROCESSED_DIR = WORKSPACE / "processed"
+WORKSPACE_ROOT = BASE_DIR / "workspace"
 STATIC_DIR = BASE_DIR / "public"
-DB_FILE = WORKSPACE / "episodes_db.json"
 
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-app.mount("/outputs", StaticFiles(directory=str(PROCESSED_DIR)), name="outputs")
 
-EPISODES_DB = {}
+# Global Processing Locks ដើម្បីការពារកុំឱ្យ CPU/RAM គាំងពេលមនុស្សច្រើនចុចព្រមគ្នា
+RENDER_LOCK = threading.Lock()
+WHISPER_LOCK = threading.Lock()
+
 GLOBAL_WHISPER_INSTANCE = None
 CURRENT_MODEL_NAME = None
 
-def load_db():
-    global EPISODES_DB
-    if DB_FILE.exists():
+def get_user_workspace(session_id: str):
+    user_dir = WORKSPACE_ROOT / session_id
+    uploads = user_dir / "uploads"
+    processed = user_dir / "processed"
+    uploads.mkdir(parents=True, exist_ok=True)
+    processed.mkdir(parents=True, exist_ok=True)
+    db_file = user_dir / "episodes.json"
+    return user_dir, uploads, processed, db_file
+
+def load_user_db(db_file: Path):
+    if db_file.exists():
         try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
+            with open(db_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
-                    EPISODES_DB = data
+                    return data
         except Exception:
             pass
+    return {}
 
-def save_db():
+def save_user_db(db_file: Path, data: dict):
     try:
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(EPISODES_DB, f, ensure_ascii=False, indent=2)
+        with open(db_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"[!] Save DB Error: {e}")
-
-load_db()
+        print(f"[!] Error saving DB: {e}")
 
 class BatchRenderConfig(BaseModel):
     episode_ids: List[str]
@@ -105,21 +105,10 @@ class BatchRenderConfig(BaseModel):
     aspect_ratio: str = "9:16"
     resolution: str = "1080p"
     dialogues_map: Optional[dict] = None
-    trim_in: float = 0.0
-    trim_out: Optional[float] = None
-
-def format_ass_time(seconds: float) -> str:
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = int(seconds % 60)
-    cs = int((seconds - int(seconds)) * 100)
-    return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
 
 def get_media_duration(file_path: str) -> float:
     try:
-        cmd = [
-            FFMPEG_BIN, "-i", str(file_path)
-        ]
+        cmd = [FFMPEG_BIN, "-i", str(file_path)]
         res = subprocess.run(cmd, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True, errors='replace')
         match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", res.stderr)
         if match:
@@ -223,42 +212,15 @@ def fit_audio_exact_to_scene(raw_wav: str, scene_dur: float, out_wav: str):
     if not os.path.exists(out_wav) or os.path.getsize(out_wav) < 100:
         shutil.copyfile(raw_wav, out_wav)
 
-def get_whisper_turbo_model(model_name: str = "tiny"):
-    global GLOBAL_WHISPER_INSTANCE, CURRENT_MODEL_NAME
-    # បើដំណើរការលើ Render (RAM 512MB) បង្ខំឱ្យប្រើ tiny ដើម្បីកុំឱ្យ Crash 502
-    is_render = bool(os.environ.get("RENDER"))
-    chosen_model = "tiny" if is_render else model_name
-
-    if GLOBAL_WHISPER_INSTANCE is None or CURRENT_MODEL_NAME != chosen_model:
+def get_shared_whisper_instance():
+    global GLOBAL_WHISPER_INSTANCE
+    if GLOBAL_WHISPER_INSTANCE is None:
         if WhisperModel:
             try:
-                GLOBAL_WHISPER_INSTANCE = WhisperModel(
-                    chosen_model, 
-                    device="cpu", 
-                    compute_type="int8", 
-                    cpu_threads=2,
-                    num_workers=1
-                )
-                CURRENT_MODEL_NAME = chosen_model
-            except Exception as e:
-                print(f"[!] Whisper Load Error: {e}")
-                GLOBAL_WHISPER_INSTANCE = WhisperModel("tiny", device="cpu", compute_type="int8")
-                CURRENT_MODEL_NAME = "tiny"
+                GLOBAL_WHISPER_INSTANCE = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2, num_workers=1)
+            except Exception:
+                pass
     return GLOBAL_WHISPER_INSTANCE
-
-def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) -> str:
-    female_regex = r"(她|女人|女孩|小姐|妈妈|妻子|老婆|姐姐|妹妹|夫人|太太|娘|珊珊|小雪|she|her|woman|girl|lady|miss|mrs|mother|sister|wife)"
-    male_regex = r"(他|男人|男孩|先生|爸爸|丈夫|老公|哥哥|弟弟|少爷|老爹|林总|王总|he|him|his|man|boy|mr|sir|father|brother|husband)"
-    female_km = r"(នាង|នារី|ស្រី|ម៉ាក់|ម្ដាយ|បងស្រី|ប្អូនស្រី|ភរិយា|ប្រពន្ធ|កញ្ញា|អ្នកស្រី|អូន|ចៅស្រី)"
-    male_km = r"(គាត់|បុរស|ប្រុស|ប៉ា|ឪពុក|បងប្រុស|ប្អូនប្រុស|ស្វាមី|ប្ដី|លោក|បង|ចៅប្រុស)"
-
-    orig_lower = orig_text.lower()
-    if re.search(female_regex, orig_lower) or re.search(female_km, khmer_text):
-        return "sreymom"
-    if re.search(male_regex, orig_lower) or re.search(male_km, khmer_text):
-        return "piseth"
-
-    return "sreymom" if last_speaker == "piseth" else "piseth"
 
 def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", cloud_type: str = "", cloud_key: str = "") -> List[str]:
     if not texts:
@@ -269,9 +231,9 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
         f"You are a professional film voiceover translator. Translate the following array of {lang_desc} "
         "movie dialogue lines into natural spoken Khmer for direct character dubbing. "
         "RULES:\n"
-        "1. Match conversational emotion and scene context.\n"
+        "1. Match conversational emotion and context.\n"
         "2. Keep Khmer translations concise and punchy to fit lip-sync timing.\n"
-        "3. Output ONLY a strict JSON array of translated Khmer strings."
+        "3. Output MUST be ONLY a strict JSON array of translated Khmer strings."
     )
 
     if cloud_type == "cloud_openai" and cloud_key:
@@ -287,15 +249,11 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
             req = urllib.request.Request(
                 "https://api.openai.com/v1/chat/completions",
                 data=json.dumps(req_data).encode("utf-8"),
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {cloud_key.strip()}"
-                }
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
             )
             with urllib.request.urlopen(req, timeout=12) as resp:
                 res_json = json.loads(resp.read().decode("utf-8"))
-                content = res_json["choices"][0]["message"]["content"].strip()
-                match = re.search(r'\[.*\]', content, re.DOTALL)
+                match = re.search(r'\[.*\]', res_json["choices"][0]["message"]["content"].strip(), re.DOTALL)
                 if match:
                     parsed = json.loads(match.group(0))
                     if len(parsed) == len(texts):
@@ -316,15 +274,11 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
             req = urllib.request.Request(
                 "https://api.groq.com/openai/v1/chat/completions",
                 data=json.dumps(req_data).encode("utf-8"),
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {cloud_key.strip()}"
-                }
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
                 res_json = json.loads(resp.read().decode("utf-8"))
-                content = res_json["choices"][0]["message"]["content"].strip()
-                match = re.search(r'\[.*\]', content, re.DOTALL)
+                match = re.search(r'\[.*\]', res_json["choices"][0]["message"]["content"].strip(), re.DOTALL)
                 if match:
                     parsed = json.loads(match.group(0))
                     if len(parsed) == len(texts):
@@ -334,14 +288,11 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
 
     results = []
     src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
-
     for txt in texts:
-        clean = txt.strip()
+        clean = re.sub(r'^[（\(].*?[）\)]', '', txt.strip())
         if not clean:
             results.append("")
             continue
-        clean = re.sub(r'^[（\(].*?[）\)]', '', clean)
-        
         translated = ""
         try:
             encoded = urllib.parse.quote(clean)
@@ -352,45 +303,35 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
                 if data and data[0]:
                     translated = "".join([s[0] for s in data[0] if s and s[0]]).strip()
         except Exception:
-            pass
-
-        if not translated:
             translated = clean
-
-        cleaned_km = translated.replace("នារីម្នាក់", "នាង").replace("បុរសម្នាក់", "គាត់")
-        results.append(cleaned_km)
-
+        results.append(translated or clean)
     return results
 
 @app.get("/")
-async def root_view():
+async def root_view(response: Response, sid: Optional[str] = Cookie(None)):
+    session_id = sid or str(uuid.uuid4().hex[:12])
+    response.set_cookie(key="sid", value=session_id, max_age=86400 * 7, httponly=False)
     index_path = STATIC_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
-    return {"message": "Please place public/index.html correctly."}
-
-@app.get("/api/download/{filename}")
-async def download_file_direct(filename: str):
-    file_path = PROCESSED_DIR / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path=str(file_path), filename=filename, media_type="video/mp4")
+    return FileResponse(index_path)
 
 @app.post("/api/batch-upload")
-async def batch_upload(files: List[UploadFile] = File(...)):
-    load_db()
+async def batch_upload(files: List[UploadFile] = File(...), sid: Optional[str] = Cookie(None)):
+    session_id = sid or "default_user"
+    _, uploads_dir, _, db_file = get_user_workspace(session_id)
+    user_db = load_user_db(db_file)
+
     uploaded_eps = []
-    current_count = len(EPISODES_DB)
+    current_count = len(user_db)
     for i, f in enumerate(files):
         ep_id = f"ep_{uuid.uuid4().hex[:6]}"
         ep_code = f"EP{current_count + i + 1:02d}"
         ext = Path(f.filename).suffix.lower() or ".mp4"
-        dest_path = UPLOADS_DIR / f"{ep_id}_{ep_code}{ext}"
+        dest_path = uploads_dir / f"{ep_id}_{ep_code}{ext}"
 
         with open(dest_path, "wb") as buffer:
             shutil.copyfileobj(f.file, buffer)
 
-        EPISODES_DB[ep_id] = {
+        user_db[ep_id] = {
             "id": ep_id,
             "code": ep_code,
             "filename": f.filename,
@@ -399,45 +340,26 @@ async def batch_upload(files: List[UploadFile] = File(...)):
             "progress": 0,
             "dialogues": []
         }
-        uploaded_eps.append(EPISODES_DB[ep_id])
-    save_db()
+        uploaded_eps.append(user_db[ep_id])
+
+    save_user_db(db_file, user_db)
     return {"uploaded": uploaded_eps}
 
-@app.post("/api/clear-all-episodes")
-async def clear_all_episodes():
-    global EPISODES_DB
-    EPISODES_DB.clear()
-    save_db()
-    for folder in [UPLOADS_DIR, PROCESSED_DIR]:
-        for item in folder.glob("*"):
-            try:
-                if item.is_file():
-                    item.unlink()
-                elif item.is_dir():
-                    shutil.rmtree(item)
-            except Exception:
-                pass
-    return {"message": "All episodes cleared successfully"}
+@app.get("/api/episodes")
+async def get_episodes(sid: Optional[str] = Cookie(None)):
+    session_id = sid or "default_user"
+    _, _, _, db_file = get_user_workspace(session_id)
+    return JSONResponse(load_user_db(db_file))
 
-@app.delete("/api/episodes/{episode_id}")
-async def delete_single_episode_api(episode_id: str):
-    global EPISODES_DB
-    load_db()
-    if episode_id in EPISODES_DB:
-        ep = EPISODES_DB.pop(episode_id)
-        try:
-            if os.path.exists(ep.get("path", "")):
-                os.remove(ep["path"])
-        except Exception:
-            pass
-        new_db = {}
-        for idx, (k, v) in enumerate(EPISODES_DB.items()):
-            v["code"] = f"EP{idx + 1:02d}"
-            new_db[k] = v
-        EPISODES_DB = new_db
-        save_db()
-        return {"message": "Deleted successfully", "episodes": EPISODES_DB}
-    raise HTTPException(status_code=404, detail="Episode not found")
+@app.post("/api/clear-all-episodes")
+async def clear_all_episodes(sid: Optional[str] = Cookie(None)):
+    session_id = sid or "default_user"
+    user_dir, _, _, _ = get_user_workspace(session_id)
+    try:
+        shutil.rmtree(user_dir)
+    except Exception:
+        pass
+    return {"message": "Cleared successfully"}
 
 @app.post("/api/transcribe-episode")
 async def transcribe_episode(
@@ -445,201 +367,164 @@ async def transcribe_episode(
     model_size: str = Form("tiny"),
     cloud_key: str = Form(""),
     lang: str = Form("auto"),
-    speaker_mode: str = Form("auto")
+    speaker_mode: str = Form("auto"),
+    sid: Optional[str] = Cookie(None)
 ):
-    try:
-        load_db()
-        if episode_id not in EPISODES_DB:
-            raise HTTPException(status_code=404, detail="Episode not found")
+    session_id = sid or "default_user"
+    _, uploads_dir, _, db_file = get_user_workspace(session_id)
+    user_db = load_user_db(db_file)
 
-        ep = EPISODES_DB[episode_id]
-        ep["status"] = "transcribing"
-        video_path = ep["path"]
-        audio_path = UPLOADS_DIR / f"{episode_id}_audio.wav"
+    if episode_id not in user_db:
+        raise HTTPException(status_code=404, detail="Episode not found")
 
-        # បំបែកសំឡេងតាម FFMPEG_BIN ធានាថាមិន Error 502
-        subprocess.run([
-            FFMPEG_BIN, "-y", "-i", video_path,
-            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-            str(audio_path)
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    ep = user_db[episode_id]
+    ep["status"] = "transcribing"
+    save_user_db(db_file, user_db)
 
-        whisper = get_whisper_turbo_model("tiny")
-        sub_segments = []
-
-        if whisper:
-            whisper_lang = None if lang == "auto" else lang
-            segments, _ = whisper.transcribe(
-                str(audio_path),
-                vad_filter=True,
-                language=whisper_lang,
-                beam_size=1,
-                temperature=0.0
-            )
-
-            for seg in segments:
-                txt = seg.text.strip()
-                if txt:
-                    sub_segments.append({"start": round(seg.start, 2), "end": round(seg.end, 2), "text": txt})
-
-        orig_texts = [s["text"] for s in sub_segments]
-        khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
-
-        dialogues = []
-        last_speaker = "piseth"
-
-        for idx, orig in enumerate(sub_segments):
-            final_khmer = khmer_translations[idx] if idx < len(khmer_translations) else orig["text"]
-            final_spk = "piseth" if speaker_mode == "male" else ("sreymom" if speaker_mode == "female" else analyze_smart_speaker(orig["text"], final_khmer, last_speaker))
-            last_speaker = final_spk
-            dialogues.append({
-                "id": idx + 1,
-                "start": orig["start"],
-                "end": orig["end"],
-                "original_text": orig["text"],
-                "khmer_text": final_khmer,
-                "speaker": final_spk
-            })
-
-        ep["dialogues"] = dialogues
-        ep["status"] = "transcribed"
-        save_db()
-        return JSONResponse({"episode_id": episode_id, "dialogues": dialogues})
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.post("/api/preview-tts")
-async def preview_single_tts(text: str = Form(...), speaker: str = Form("piseth")):
-    clean_text = text.strip() or "សួស្តី"
-    voice = "km-KH-SreymomNeural" if speaker == "sreymom" else "km-KH-PisethNeural"
-    uid = uuid.uuid4().hex[:6]
-    out_wav = PROCESSED_DIR / f"prev_{uid}.wav"
-
-    ok = generate_khmer_audio_fast(clean_text, voice, str(out_wav))
-    if not ok or not out_wav.exists():
-        raise HTTPException(status_code=500, detail="TTS Engine Failed")
-
-    return FileResponse(path=str(out_wav), media_type="audio/wav", filename="preview.wav")
-
-def render_single_episode_sync(ep_id: str, cfg_dict: dict) -> str:
-    load_db()
-    ep = EPISODES_DB[ep_id]
-    ep["status"] = "rendering"
-    ep["progress"] = 30
-    save_db()
-
-    dialogues = cfg_dict.get("dialogues_map", {}).get(ep_id) or ep.get("dialogues", [])
-    video_in = ep["path"]
-    total_video_duration = get_media_duration(str(video_in)) or 60.0
-
-    clips_results = []
-    for idx, d in enumerate(dialogues):
-        txt = d.get("khmer_text", "").strip()
-        if not txt:
-            continue
-        voice_id = "km-KH-SreymomNeural" if d.get("speaker") == "sreymom" else "km-KH-PisethNeural"
-        raw_wav = PROCESSED_DIR / f"{ep_id}_r_{idx}.wav"
-        fit_wav = PROCESSED_DIR / f"{ep_id}_f_{idx}.wav"
-
-        if generate_khmer_audio_fast(txt, voice_id, str(raw_wav)):
-            fit_audio_exact_to_scene(str(raw_wav), max(0.35, float(d["end"]) - float(d["start"])), str(fit_wav))
-            clips_results.append({
-                "start": float(d["start"]),
-                "duration": get_media_duration(str(fit_wav)),
-                "path": str(fit_wav)
-            })
-
-    ep["progress"] = 70
-    save_db()
-
-    dub_track = PROCESSED_DIR / f"{ep_id}_dub.wav"
-    manifest_txt = PROCESSED_DIR / f"{ep_id}_manifest.txt"
-    current_cursor = 0.0
-
-    common_silence = PROCESSED_DIR / "silence_master.wav"
-    if not common_silence.exists():
-        subprocess.run([
-            FFMPEG_BIN, "-y", "-f", "lavfi",
-            "-i", "anullsrc=r=48000:cl=stereo",
-            "-t", "30",
-            "-c:a", "pcm_s16le",
-            str(common_silence)
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    with open(manifest_txt, "w", encoding="utf-8") as f_mf:
-        for idx, clip in enumerate(clips_results):
-            gap = clip["start"] - current_cursor
-            if gap > 0.04:
-                sil_chunk = PROCESSED_DIR / f"{ep_id}_sil_{idx}.wav"
-                subprocess.run([FFMPEG_BIN, "-y", "-i", str(common_silence), "-t", f"{gap:.3f}", "-c", "copy", str(sil_chunk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                f_mf.write(f"file '{str(sil_chunk).replace(os.sep, '/')}'\n")
-
-            f_mf.write(f"file '{clip['path'].replace(os.sep, '/')}'\n")
-            current_cursor = clip["start"] + clip["duration"]
-
-        if total_video_duration > current_cursor:
-            end_sil = PROCESSED_DIR / f"{ep_id}_end_sil.wav"
-            subprocess.run([FFMPEG_BIN, "-y", "-i", str(common_silence), "-t", f"{total_video_duration - current_cursor:.3f}", "-c", "copy", str(end_sil)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            f_mf.write(f"file '{str(end_sil).replace(os.sep, '/')}'\n")
+    video_path = ep["path"]
+    audio_path = uploads_dir / f"{episode_id}_audio.wav"
 
     subprocess.run([
-        FFMPEG_BIN, "-y", "-f", "concat", "-safe", "0",
-        "-i", str(manifest_txt),
-        "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2",
-        str(dub_track)
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        FFMPEG_BIN, "-y", "-i", video_path,
+        "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+        str(audio_path)
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 
-    ep["progress"] = 90
-    save_db()
+    # ប្រើ Lock ដើម្បីឱ្យអ្នកប្រើផ្សេងទៀតតម្រង់ជួរគ្នា មិននាំឱ្យលើសទំហំ RAM
+    with WHISPER_LOCK:
+        whisper = get_shared_whisper_instance()
+        sub_segments = []
+        if whisper:
+            whisper_lang = None if lang == "auto" else lang
+            segments, _ = whisper.transcribe(str(audio_path), vad_filter=True, language=whisper_lang, beam_size=1, temperature=0.0)
+            for seg in segments:
+                t = seg.text.strip()
+                if t:
+                    sub_segments.append({"start": round(seg.start, 2), "end": round(seg.end, 2), "text": t})
 
-    out_name = f"dubbed_{ep.get('code', 'ep')}_{uuid.uuid4().hex[:6]}.mp4"
-    final_mp4 = PROCESSED_DIR / out_name
+    orig_texts = [s["text"] for s in sub_segments]
+    khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
 
-    cmd = [
-        FFMPEG_BIN, "-y",
-        "-i", str(video_in),
-        "-i", str(dub_track),
-        "-map", "0:v:0",
-        "-map", "1:a:0",
-        "-filter:a", "volume=2.2,alimiter=limit=0.98",
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        str(final_mp4)
-    ]
-    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    dialogues = []
+    last_spk = "piseth"
+    for idx, orig in enumerate(sub_segments):
+        f_km = khmer_translations[idx] if idx < len(khmer_translations) else orig["text"]
+        spk = "piseth" if speaker_mode == "male" else ("sreymom" if speaker_mode == "female" else ("sreymom" if last_spk == "piseth" else "piseth"))
+        last_spk = spk
+        dialogues.append({
+            "id": idx + 1,
+            "start": orig["start"],
+            "end": orig["end"],
+            "original_text": orig["text"],
+            "khmer_text": f_km,
+            "speaker": spk
+        })
 
-    load_db()
-    if ep_id in EPISODES_DB:
-        EPISODES_DB[ep_id]["status"] = "completed"
-        EPISODES_DB[ep_id]["progress"] = 100
-        EPISODES_DB[ep_id]["output_url"] = f"/api/download/{out_name}"
-        save_db()
+    user_db = load_user_db(db_file)
+    if episode_id in user_db:
+        user_db[episode_id]["dialogues"] = dialogues
+        user_db[episode_id]["status"] = "transcribed"
+        save_user_db(db_file, user_db)
 
-    return str(final_mp4)
+    return JSONResponse({"episode_id": episode_id, "dialogues": dialogues})
 
-def run_render_in_daemon_thread(cfg_dict: dict):
-    ep_ids = cfg_dict.get("episode_ids", [])
-    for ep_id in ep_ids:
-        load_db()
-        if ep_id in EPISODES_DB:
-            try:
-                render_single_episode_sync(ep_id, cfg_dict)
-            except Exception as e:
-                print(f"[!] Render error: {e}")
-                EPISODES_DB[ep_id]["status"] = "failed"
-                save_db()
+@app.get("/api/download/{session_id}/{filename}")
+async def download_user_file(session_id: str, filename: str):
+    _, _, processed_dir, _ = get_user_workspace(session_id)
+    file_path = processed_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=str(file_path), filename=filename, media_type="video/mp4")
+
+def render_worker(session_id: str, cfg_dict: dict):
+    with RENDER_LOCK:
+        _, _, processed_dir, db_file = get_user_workspace(session_id)
+        ep_ids = cfg_dict.get("episode_ids", [])
+        
+        for ep_id in ep_ids:
+            user_db = load_user_db(db_file)
+            if ep_id not in user_db:
+                continue
+
+            ep = user_db[ep_id]
+            ep["status"] = "rendering"
+            ep["progress"] = 30
+            save_user_db(db_file, user_db)
+
+            dialogues = cfg_dict.get("dialogues_map", {}).get(ep_id) or ep.get("dialogues", [])
+            video_in = ep["path"]
+            total_dur = get_media_duration(video_in) or 60.0
+
+            clips = []
+            for idx, d in enumerate(dialogues):
+                txt = d.get("khmer_text", "").strip()
+                if not txt:
+                    continue
+                v_id = "km-KH-SreymomNeural" if d.get("speaker") == "sreymom" else "km-KH-PisethNeural"
+                r_wav = processed_dir / f"{ep_id}_r_{idx}.wav"
+                f_wav = processed_dir / f"{ep_id}_f_{idx}.wav"
+
+                if generate_khmer_audio_fast(txt, v_id, str(r_wav)):
+                    fit_audio_exact_to_scene(str(r_wav), max(0.35, float(d["end"]) - float(d["start"])), str(f_wav))
+                    clips.append({"start": float(d["start"]), "duration": get_media_duration(str(f_wav)), "path": str(f_wav)})
+
+            user_db["progress"] = 70
+            save_user_db(db_file, user_db)
+
+            dub_track = processed_dir / f"{ep_id}_dub.wav"
+            manifest = processed_dir / f"{ep_id}_mf.txt"
+            cursor = 0.0
+
+            sil_master = processed_dir / "sil.wav"
+            if not sil_master.exists():
+                subprocess.run([FFMPEG_BIN, "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", "30", "-c:a", "pcm_s16le", str(sil_master)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            with open(manifest, "w", encoding="utf-8") as f_mf:
+                for idx, c in enumerate(clips):
+                    gap = c["start"] - cursor
+                    if gap > 0.04:
+                        s_chunk = processed_dir / f"{ep_id}_s_{idx}.wav"
+                        subprocess.run([FFMPEG_BIN, "-y", "-i", str(sil_master), "-t", f"{gap:.3f}", "-c", "copy", str(s_chunk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        f_mf.write(f"file '{str(s_chunk).replace(os.sep, '/')}'\n")
+                    f_mf.write(f"file '{c['path'].replace(os.sep, '/')}'\n")
+                    cursor = c["start"] + c["duration"]
+
+                if total_dur > cursor:
+                    e_chunk = processed_dir / f"{ep_id}_e.wav"
+                    subprocess.run([FFMPEG_BIN, "-y", "-i", str(sil_master), "-t", f"{total_dur - cursor:.3f}", "-c", "copy", str(e_chunk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    f_mf.write(f"file '{str(e_chunk).replace(os.sep, '/')}'\n")
+
+            subprocess.run([FFMPEG_BIN, "-y", "-f", "concat", "-safe", "0", "-i", str(manifest), "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", str(dub_track)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            out_name = f"dubbed_{ep.get('code', 'ep')}_{uuid.uuid4().hex[:6]}.mp4"
+            final_mp4 = processed_dir / out_name
+
+            subprocess.run([
+                FFMPEG_BIN, "-y",
+                "-i", str(video_in),
+                "-i", str(dub_track),
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-filter:a", "volume=2.2,alimiter=limit=0.98",
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                str(final_mp4)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            user_db = load_user_db(db_file)
+            if ep_id in user_db:
+                user_db[ep_id]["status"] = "completed"
+                user_db[ep_id]["progress"] = 100
+                user_db[ep_id]["output_url"] = f"/api/download/{session_id}/{out_name}"
+                save_user_db(db_file, user_db)
 
 @app.post("/api/batch-render")
-def start_batch_render(cfg: BatchRenderConfig):
-    worker = threading.Thread(target=run_render_in_daemon_thread, args=(cfg.dict(),), daemon=True)
+async def start_batch_render(cfg: BatchRenderConfig, sid: Optional[str] = Cookie(None)):
+    session_id = sid or "default_user"
+    worker = threading.Thread(target=render_worker, args=(session_id, cfg.dict()), daemon=True)
     worker.start()
-    return JSONResponse({"message": "Batch rendering started"})
-
-@app.get("/api/episodes")
-def get_episodes():
-    load_db()
-    return JSONResponse(EPISODES_DB)
+    return JSONResponse({"message": "Render enqueued successfully"})
 
 if __name__ == "__main__":
     import uvicorn
