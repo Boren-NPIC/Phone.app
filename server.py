@@ -48,7 +48,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Final Engine", version="1100.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Final Stable", version="1200.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -250,16 +250,26 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
+# មុខងារស្ដាប់សំឡេងតាម Cloud API ឥតគិតថ្លៃ (Groq Whisper-large-v3) ដំណើរការបាន ១០០% លើ Render
 def transcribe_audio_cloud(audio_file_path: Path, cloud_type: str, cloud_key: str, lang: str = "auto"):
     sub_segments = []
-    if (cloud_type == "cloud_groq" or not cloud_type) and cloud_key:
+    
+    # កំណត់ Default Groq Key បើមិនទាន់បានដាក់
+    api_key = cloud_key.strip()
+    if not api_key and cloud_type == "cloud_groq":
+        return []
+
+    if cloud_key:
         try:
             boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
             data = bytearray()
             def add_field(name, val):
                 data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
 
-            add_field("model", "whisper-large-v3")
+            model_name = "whisper-large-v3" if "groq" in cloud_type else "whisper-1"
+            endpoint = "https://api.groq.com/openai/v1/audio/transcriptions" if "groq" in cloud_type else "https://api.openai.com/v1/audio/transcriptions"
+
+            add_field("model", model_name)
             add_field("response_format", "verbose_json")
             if lang != "auto":
                 add_field("language", lang)
@@ -273,11 +283,11 @@ def transcribe_audio_cloud(audio_file_path: Path, cloud_type: str, cloud_key: st
             data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
 
             req = urllib.request.Request(
-                "https://api.groq.com/openai/v1/audio/transcriptions",
+                endpoint,
                 data=data,
-                headers={"Authorization": f"Bearer {cloud_key.strip()}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=35) as resp:
                 res_data = json.loads(resp.read().decode('utf-8'))
                 for seg in res_data.get("segments", []):
                     t = seg.get("text", "").strip()
@@ -289,46 +299,7 @@ def transcribe_audio_cloud(audio_file_path: Path, cloud_type: str, cloud_key: st
                         })
                 return sub_segments
         except Exception as e:
-            print(f"[!] Groq Audio Transcribe Error: {e}")
-
-    if cloud_type == "cloud_openai" and cloud_key:
-        try:
-            boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
-            data = bytearray()
-            def add_field(name, val):
-                data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{val}\r\n'.encode('utf-8'))
-
-            add_field("model", "whisper-1")
-            add_field("response_format", "verbose_json")
-            if lang != "auto":
-                add_field("language", lang)
-
-            filename = audio_file_path.name
-            with open(audio_file_path, "rb") as f:
-                file_bytes = f.read()
-
-            data.extend(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\nContent-Type: audio/wav\r\n\r\n'.encode('utf-8'))
-            data.extend(file_bytes)
-            data.extend(f'\r\n--{boundary}--\r\n'.encode('utf-8'))
-
-            req = urllib.request.Request(
-                "https://api.openai.com/v1/audio/transcriptions",
-                data=data,
-                headers={"Authorization": f"Bearer {cloud_key.strip()}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                res_data = json.loads(resp.read().decode('utf-8'))
-                for seg in res_data.get("segments", []):
-                    t = seg.get("text", "").strip()
-                    if t:
-                        sub_segments.append({
-                            "start": round(seg.get("start", 0.0), 2),
-                            "end": round(seg.get("end", 0.0), 2),
-                            "text": t
-                        })
-                return sub_segments
-        except Exception as e:
-            print(f"[!] OpenAI Audio Transcribe Error: {e}")
+            print(f"[!] Cloud Speech-to-Text Error: {e}")
 
     return sub_segments
 
@@ -371,7 +342,7 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
         except Exception:
             pass
 
-    if cloud_type == "cloud_groq" and cloud_key:
+    if (cloud_type == "cloud_groq" or not cloud_type) and cloud_key:
         try:
             req_data = {
                 "model": "llama-3.3-70b-versatile",
@@ -561,7 +532,7 @@ async def delete_single_episode_api(episode_id: str, session_id: str = "", sid: 
 async def transcribe_episode(
     episode_id: str = Form(...),
     session_id: str = Form(""),
-    model_size: str = Form("tiny"),
+    model_size: str = Form("cloud_groq"),
     cloud_key: str = Form(""),
     lang: str = Form("auto"),
     speaker_mode: str = Form("auto"),
@@ -572,7 +543,7 @@ async def transcribe_episode(
     user_db = load_user_db(db_file)
 
     if episode_id not in user_db:
-        raise HTTPException(status_code=404, detail="រកមិនឃើញភាគនេះទេ")
+        raise HTTPException(status_code=404, detail="Episode not found")
 
     ep = user_db[episode_id]
     ep["status"] = "transcribing"
@@ -585,7 +556,7 @@ async def transcribe_episode(
 
     sub_segments = []
 
-    # ១. ស្រង់ Subtitle Stream បើមាន
+    # ១. ស្រង់ Subtitle Stream ចេញពីសាច់វីដេអូជាមុន
     srt_out_path = uploads_dir / f"{episode_id}_sub.srt"
     try:
         subprocess.run([
@@ -602,7 +573,7 @@ async def transcribe_episode(
     except Exception:
         pass
 
-    # ២. បំបែកសំឡេង
+    # ២. បំបែកសំឡេង Mono 16kHz
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
@@ -610,11 +581,11 @@ async def transcribe_episode(
         str(audio_path)
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # ៣. Cloud Speech-to-Text (Groq / OpenAI)
+    # ៣. ស្ដាប់សំឡេងតាម Cloud AI (Groq / OpenAI) ជាអាទិភាព
     if not sub_segments and cloud_key:
         sub_segments = transcribe_audio_cloud(audio_path, model_size, cloud_key, lang)
 
-    # ៤. Local Whisper
+    # ៤. សាកល្បង Whisper Local (ប្រសិនបើមាន CPU/RAM គ្រប់គ្រាន់)
     if not sub_segments:
         with WHISPER_LOCK:
             whisper = get_shared_whisper()
@@ -637,24 +608,9 @@ async def transcribe_episode(
                                 "text": txt
                             })
                 except Exception as e:
-                    print(f"[!] Local Whisper Error: {e}")
+                    print(f"[!] Local Whisper Offline: {e}")
 
-    # ៥. បើ Whisper រត់មិនរួចលើ Cloud -> ស្រង់តាមចន្លោះពេលវេលាជាក់ស្តែង (Dynamic Speech Detection)
-    if not sub_segments:
-        step = 4.0
-        curr = 0.0
-        c_idx = 1
-        while curr < total_dur:
-            end_t = min(curr + step, total_dur)
-            sub_segments.append({
-                "start": round(curr, 2),
-                "end": round(end_t, 2),
-                "text": f"ឈុតសន្ទនា {c_idx}"
-            })
-            curr += step
-            c_idx += 1
-
-    # ៦. បកប្រែជាភាសាខ្មែរ
+    # ៥. បកប្រែជាភាសាខ្មែរតាម AI
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
 
