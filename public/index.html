@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KhmerDub Studio Pro - Precision Multi-User Engine</title>
+    <title>KhmerDub Studio Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,7 +76,6 @@
             </div>
         </div>
 
-        <!-- Audio Monitor Status -->
         <div
             class="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-studio-card border border-studio-border text-xs">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -150,7 +149,7 @@
             </div>
         </aside>
 
-        <!-- 2. CENTER PANEL: DIALOGUE SCRIPT -->
+        <!-- 2. CENTER PANEL: DIALOGUES -->
         <main
             class="w-full flex-1 flex flex-col bg-studio-base border-b lg:border-b-0 overflow-hidden min-h-[360px] lg:min-h-0">
             <div
@@ -174,7 +173,7 @@
             </div>
         </main>
 
-        <!-- 3. RIGHT PANEL: VIDEO MONITOR & SETTINGS (រក្សាទុក Options ទាំងអស់) -->
+        <!-- 3. RIGHT PANEL: VIDEO MONITOR & SETTINGS -->
         <aside
             class="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-studio-border bg-studio-panel flex flex-col overflow-y-auto flex-shrink-0 p-3 space-y-3">
 
@@ -202,7 +201,7 @@
                 </div>
             </div>
 
-            <!-- Settings Controls ទាំងអស់ -->
+            <!-- Settings Controls -->
             <div class="grid grid-cols-1 gap-2">
                 <div class="p-2 rounded-xl bg-studio-card border border-studio-border space-y-1 text-xs">
                     <span class="font-bold text-cyan-300 text-[10px] flex items-center gap-1">
@@ -226,7 +225,7 @@
                     <select id="selModelSize" onchange="toggleCloudKeyInput()"
                         class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
                         <option value="tiny" selected>⚡ Tiny Model (ស្រាល លឿនបំផុត - ណែនាំលើ Cloud)</option>
-                        <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
+                        <option value="cloud_openai">☁️️ OpenAI Cloud (GPT-4o-mini)</option>
                         <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
                     </select>
 
@@ -316,7 +315,7 @@
         </aside>
     </div>
 
-    <!-- 4. BOTTOM PANEL: TIMELINE TRACKS (រក្សាទុកជម្រើសដើម) -->
+    <!-- 4. BOTTOM PANEL: TIMELINE -->
     <footer class="border-t border-studio-border bg-studio-panel flex flex-col flex-shrink-0 z-20">
         <div
             class="h-9 border-b border-studio-border px-3 flex flex-wrap items-center justify-between gap-1.5 bg-studio-card/80 text-xs">
@@ -330,7 +329,8 @@
 
                 <button onclick="splitCurrentDialogue()"
                     class="flex items-center gap-1 px-2.5 py-0.5 rounded bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 text-rose-200 text-[9px] font-semibold transition active:scale-95">
-                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i> <span>កាត់ (Split)</span>
+                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i>
+                    <span>កាត់ (Split)</span>
                 </button>
 
                 <button id="btnDeleteSelected" onclick="deleteSelectedClip()" disabled
@@ -391,7 +391,6 @@
     </footer>
 
     <script>
-        // គ្រប់គ្រង Session ID សម្រាប់អ្នកប្រើប្រាស់ម្នាក់ៗ
         function getSessionId() {
             let sid = localStorage.getItem("khmerdub_sid");
             if (!sid) {
