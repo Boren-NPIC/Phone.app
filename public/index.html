@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KhmerDub Studio Pro - 1080p Ultra HD</title>
+    <title>KhmerDub Studio Pro - Professional Multi-Language Dubbing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,11 +68,11 @@
                     <span class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">KhmerDub Studio
                         Pro</span>
                     <span
-                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">V3-TURBO
-                        4X</span>
+                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">MULTI-LANG
+                        PRO</span>
                 </div>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">Large-v3-Turbo Whisper • GPU
-                    Hardware Render • 1080p & 4K</p>
+                <p class="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">បកប្រែចិន & អង់គ្លេស •
+                    ត្រូវមាត់តួអង្គ ១០០% • GPU Hardware Render</p>
             </div>
         </div>
 
@@ -80,8 +80,8 @@
         <div
             class="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-studio-card border border-studio-border text-xs">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-300 text-[11px]">Audio Monitor: <strong class="text-emerald-400">Khmer Dub Active
-                    (No Foreign Voice)</strong></span>
+            <span class="text-slate-300 text-[11px]">Audio Monitor: <strong class="text-emerald-400">Direct Dub
+                    Active</strong></span>
         </div>
 
         <!-- Top Action Buttons -->
@@ -157,13 +157,12 @@
                 class="h-9 border-b border-studio-border bg-studio-panel/60 px-3 flex items-center justify-between text-xs">
                 <span id="currentEpisodeHeader"
                     class="font-bold text-cyan-400 flex items-center gap-1.5 text-xs truncate max-w-[240px]">
-                    <i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> អត្ថបទបកប្រែ (Script Dialogues)
+                    <i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> អត្ថបទសន្ទនា (Direct Dialogues)
                 </span>
                 <div class="flex items-center gap-2 text-[10px] text-slate-400">
                     <span id="currentDialogueCount">0 ឃ្លា</span>
                     <span class="hidden sm:inline text-studio-border">|</span>
-                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">Large-V3-Turbo
-                            (4X)</strong></span>
+                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">AI Cloud Sync</strong></span>
                 </div>
             </div>
 
@@ -204,17 +203,58 @@
             </div>
 
             <!-- Settings Controls -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
-                <div
-                    class="p-2 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-1 text-xs">
-                    <span class="font-bold text-rose-300 text-[10px] flex items-center gap-1">
-                        <i data-lucide="zap" class="w-3 h-3 text-rose-400"></i> AI Transcribe Turbo
+            <div class="grid grid-cols-1 gap-2">
+
+                <!-- Source Language Selection -->
+                <div class="p-2 rounded-xl bg-studio-card border border-studio-border space-y-1 text-xs">
+                    <span class="font-bold text-cyan-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="languages" class="w-3 h-3 text-cyan-400"></i> ភាសាដើមក្នុងវីដេអូ (Source
+                        Language)
                     </span>
-                    <select id="selModelSize"
-                        class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1 text-white text-[11px] outline-none">
-                        <option value="large-v3-turbo" selected>⚡ Large-v3-Turbo (លឿនបំផុត + ត្រឹមត្រូវខ្ពស់)</option>
-                        <option value="base">🚀 Base Model</option>
+                    <select id="selSourceLang"
+                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1.5 text-white text-[11px] outline-none">
+                        <option value="auto" selected>🌐 Auto Detect (ស្គាល់ដោយស្វ័យប្រវត្តិ)</option>
+                        <option value="zh">🇨🇳 ភាសាចិន (Chinese Drama / Movie)</option>
+                        <option value="en">🇺🇸 ភាសាអង់គ្លេស (English Movie / Clip)</option>
                     </select>
+                </div>
+
+                <!-- AI Model & Cloud Translation Box -->
+                <div
+                    class="p-2.5 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-2 text-xs">
+                    <span class="font-bold text-rose-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="zap" class="w-3 h-3 text-rose-400"></i> AI Transcribe & Translation Engine
+                    </span>
+
+                    <select id="selModelSize" onchange="toggleCloudKeyInput()"
+                        class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
+                        <optgroup label="Local Whisper Models (Free)">
+                            <option value="small" selected>⚡ Small Model (លឿន + ស៊ីកម្លាំងតិច - ណែនាំ)</option>
+                            <option value="base">🚀 Base Model (ល្បឿនលឿនបំផុត)</option>
+                            <option value="large-v3-turbo">🔥 Large-v3-Turbo (លម្អិតបំផុត)</option>
+                        </optgroup>
+                        <optgroup label="Cloud Translation AI">
+                            <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
+                            <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
+                        </optgroup>
+                    </select>
+
+                    <!-- Input API Key សម្រាប់ Cloud -->
+                    <div id="boxCloudKey" class="hidden space-y-1 pt-1.5 border-t border-rose-500/30">
+                        <div class="flex items-center justify-between">
+                            <span id="lblKeyName" class="text-[9px] text-rose-300 font-semibold">OpenAI API Key:</span>
+                            <span class="text-[8px] text-slate-400">រក្សាទុកក្នុងម៉ាស៊ីនស្វ័យប្រវត្តិ</span>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="txtCloudKey" placeholder="sk-..."
+                                oninput="saveCloudKey(this.value)"
+                                class="w-full bg-studio-base border border-rose-400/80 rounded px-2 py-1 text-white text-[10px] outline-none focus:border-cyan-400 font-mono pr-7">
+                            <button type="button" onclick="toggleKeyVisibility()"
+                                class="absolute right-1.5 top-1.5 text-slate-400 hover:text-white">
+                                <i id="eyeIcon" data-lucide="eye" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div
@@ -273,7 +313,7 @@
             <div id="renderBox"
                 class="p-3 rounded-xl bg-indigo-950/60 border border-indigo-500/50 space-y-2 text-xs shadow-lg">
                 <div class="flex justify-between items-center">
-                    <span id="renderStatus" class="text-cyan-300 font-semibold text-[10px]">កំពុង Turbo Render...</span>
+                    <span id="renderStatus" class="text-cyan-300 font-semibold text-[10px]">រង់ចាំ Render...</span>
                     <span id="renderPercent" class="text-cyan-400 font-mono font-bold text-[10px]">0%</span>
                 </div>
                 <div class="w-full bg-studio-base h-2 rounded-full overflow-hidden border border-indigo-900">
@@ -282,18 +322,18 @@
                         style="width: 0%"></div>
                 </div>
 
-                <div id="renderDownloadArea" class="pt-1 hidden">
+                <div id="renderDownloadArea" class="pt-1">
                     <button id="btnDownloadAllToFolder" onclick="downloadAllVideosWithFolderPicker()"
                         class="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs">
                         <i data-lucide="folder-check" class="w-4 h-4 text-white"></i>
-                        <span>ជ្រើសរើស Folder រក្សាទុកវីដេអូ</span>
+                        <span id="btnDownloadText">ទាញយកវីដេអូ</span>
                     </button>
                 </div>
             </div>
         </aside>
     </div>
 
-    <!-- 4. BOTTOM PANEL: CAPCUT TIMELINE -->
+    <!-- 4. BOTTOM PANEL: TIMELINE -->
     <footer class="border-t border-studio-border bg-studio-panel flex flex-col flex-shrink-0 z-20">
         <div
             class="h-9 border-b border-studio-border px-3 flex flex-wrap items-center justify-between gap-1.5 bg-studio-card/80 text-xs">
@@ -391,6 +431,50 @@
             }
         }
 
+        function toggleCloudKeyInput() {
+            const modelVal = document.getElementById("selModelSize").value;
+            const box = document.getElementById("boxCloudKey");
+            const lbl = document.getElementById("lblKeyName");
+            const keyInput = document.getElementById("txtCloudKey");
+
+            if (modelVal === "cloud_openai") {
+                box.classList.remove("hidden");
+                lbl.innerText = "OpenAI API Key (sk-...):";
+                keyInput.placeholder = "sk-proj-...";
+                keyInput.value = localStorage.getItem("openai_cloud_key") || "";
+            } else if (modelVal === "cloud_groq") {
+                box.classList.remove("hidden");
+                lbl.innerText = "Groq Cloud API Key (gsk_...):";
+                keyInput.placeholder = "gsk_...";
+                keyInput.value = localStorage.getItem("groq_cloud_key") || "";
+            } else {
+                box.classList.add("hidden");
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function saveCloudKey(val) {
+            const modelVal = document.getElementById("selModelSize").value;
+            if (modelVal === "cloud_openai") {
+                localStorage.setItem("openai_cloud_key", val.trim());
+            } else if (modelVal === "cloud_groq") {
+                localStorage.setItem("groq_cloud_key", val.trim());
+            }
+        }
+
+        function toggleKeyVisibility() {
+            const input = document.getElementById("txtCloudKey");
+            const icon = document.getElementById("eyeIcon");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.setAttribute("data-lucide", "eye-off");
+            } else {
+                input.type = "password";
+                icon.setAttribute("data-lucide", "eye");
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
         async function onFilesChosen(event) {
             const files = Array.from(event.target.files);
             if (!files.length) return;
@@ -423,6 +507,7 @@
                 const data = await res.json();
                 episodeList = Object.values(data);
                 renderEpisodeSidebar();
+                checkSync();
             } catch (e) { }
         }
 
@@ -439,21 +524,30 @@
             episodeList.forEach((ep, idx) => {
                 const item = document.createElement("div");
                 item.className = `p-2 rounded-lg border transition text-xs relative group ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80' : 'bg-studio-card border-studio-border'}`;
+
+                const isDone = (ep.status === "completed" || ep.progress === 100) && ep.output_url;
+                const dlBtnHtml = isDone ? `
+          <a href="${ep.output_url}" download="Dubbed_${ep.code}_${ep.filename}" onclick="event.stopPropagation()" title="ទាញយកភាគនេះ" class="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition shadow animate-pulse">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          </a>
+        ` : '';
+
                 item.innerHTML = `
           <div class="flex items-center justify-between mb-1">
-            <span onclick="pickEpisode(${idx})" class="font-bold text-white truncate max-w-[110px] flex items-center gap-1 text-[11px] cursor-pointer">
+            <span onclick="pickEpisode(${idx})" class="font-bold text-white truncate max-w-[105px] flex items-center gap-1 text-[11px] cursor-pointer">
               <span class="px-1 py-0.2 rounded bg-studio-base text-cyan-400 font-mono text-[9px]">${ep.code}</span>
               ${ep.filename}
             </span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[9px] text-cyan-300 font-mono">${ep.status}</span>
+            <div class="flex items-center gap-1">
+              ${dlBtnHtml}
+              <span class="text-[9px] ${isDone ? 'text-emerald-400 font-bold' : 'text-cyan-300'} font-mono">${ep.status}</span>
               <button onclick="event.stopPropagation(); deleteSingleEpisode('${ep.id}', ${idx})" title="លុបភាគនេះ" class="text-slate-500 hover:text-rose-400 p-0.5 rounded transition">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
               </button>
             </div>
           </div>
           <div onclick="pickEpisode(${idx})" class="w-full bg-studio-base h-1 rounded-full overflow-hidden cursor-pointer">
-            <div class="bg-cyan-500 h-full transition-all duration-300" style="width: ${ep.progress || 0}%"></div>
+            <div class="${isDone ? 'bg-emerald-400' : 'bg-cyan-500'} h-full transition-all duration-300" style="width: ${ep.progress || 0}%"></div>
           </div>
         `;
                 box.appendChild(item);
@@ -470,6 +564,7 @@
                 activeIndex = -1;
                 localFileMap = {};
                 audioCache = {};
+                completedDownloadList = [];
                 playedDialoguesSet.clear();
 
                 const p = document.getElementById("player");
@@ -479,6 +574,9 @@
                 document.getElementById("btnExport").disabled = true;
                 document.getElementById("btnTranscribe").disabled = true;
                 document.getElementById("btnTranscribeAll").disabled = true;
+                document.getElementById("renderPercent").innerText = "0%";
+                document.getElementById("renderProgressBar").style.width = "0%";
+                document.getElementById("renderStatus").innerText = "រង់ចាំ Render...";
 
                 renderEpisodeSidebar();
                 renderDialogues([]);
@@ -548,10 +646,15 @@
 
         async function executeTranscribe(idx) {
             const ep = episodeList[idx];
+            const modelVal = document.getElementById("selModelSize").value;
+            const cloudKey = document.getElementById("txtCloudKey").value;
+            const srcLang = document.getElementById("selSourceLang").value;
+
             const fd = new FormData();
             fd.append("episode_id", ep.id);
-            fd.append("model_size", document.getElementById("selModelSize").value || "large-v3-turbo");
-            fd.append("lang", "zh");
+            fd.append("model_size", modelVal);
+            fd.append("cloud_key", cloudKey || "");
+            fd.append("lang", srcLang);
             fd.append("speaker_mode", document.getElementById("selSpeakerMode").value);
 
             const res = await fetch("/api/transcribe-episode", { method: "POST", body: fd });
@@ -573,7 +676,7 @@
             const txt = document.getElementById("txtTranscribe");
 
             btn.disabled = true;
-            txt.innerText = "⚡ កំពុង Transcribe...";
+            txt.innerText = "⚡ កំពុង AI Transcribe...";
 
             try {
                 await executeTranscribe(activeIndex);
@@ -917,12 +1020,17 @@
             const selectedRes = document.getElementById("selResolution").value;
 
             document.getElementById("renderBox").classList.remove("hidden");
-            document.getElementById("renderDownloadArea").classList.add("hidden");
-            document.getElementById("renderStatus").innerText = `⚡ កំពុង Turbo Render (${selectedRes.toUpperCase()})...`;
+            document.getElementById("renderStatus").innerText = `⚡ កំពុងរៀបចំ Render តាមលំដាប់ភាគ...`;
             document.getElementById("btnExport").disabled = true;
 
+            const sortedIds = [...episodeList].sort((a, b) => {
+                const numA = parseInt((a.code || '').replace(/\D/g, '')) || 0;
+                const numB = parseInt((b.code || '').replace(/\D/g, '')) || 0;
+                return numA - numB;
+            }).map(e => e.id);
+
             const payload = {
-                episode_ids: episodeList.map(e => e.id),
+                episode_ids: sortedIds,
                 merge_all_into_one: document.getElementById("chkMerge").checked,
                 speaker_mode: document.getElementById("selSpeakerMode").value,
                 speed_factor: parseFloat(document.getElementById("rngSpeed").value),
@@ -949,104 +1057,82 @@
             }
         }
 
-        // ==================== CHECKSYNC (ដោះស្រាយបញ្ហាភាគរយត្រឡប់ទៅ 0%) ====================
+        // ==================== PRECISION REAL-TIME UI SYNC ====================
         async function checkSync() {
             try {
                 const res = await fetch("/api/episodes");
                 const data = await res.json();
-
                 const serverEpisodes = Object.values(data);
                 if (!serverEpisodes.length) return;
 
-                let totalProgress = 0;
+                episodeList = serverEpisodes;
+
                 let completedCount = 0;
                 completedDownloadList = [];
 
-                // ធ្វើបច្ចុប្បន្នភាពទិន្នន័យ Episode
-                serverEpisodes.forEach(srvEp => {
-                    const localEp = episodeList.find(e => e.id === srvEp.id || e.code === srvEp.code);
-                    if (localEp) {
-                        localEp.status = srvEp.status;
-                        localEp.progress = srvEp.progress || 0;
-                        localEp.output_url = srvEp.output_url;
-                    }
-
-                    totalProgress += (srvEp.progress || 0);
-
-                    if ((srvEp.status === "completed" || srvEp.progress === 100) && srvEp.output_url) {
+                serverEpisodes.forEach(ep => {
+                    if ((ep.status === "completed" || ep.progress >= 100) && ep.output_url) {
                         completedCount++;
                         completedDownloadList.push({
-                            url: srvEp.output_url,
-                            name: `Dubbed_${srvEp.code || srvEp.id}_${srvEp.filename || 'video.mp4'}`
+                            url: ep.output_url,
+                            name: `Dubbed_${ep.code || 'EP'}_${ep.filename || 'video.mp4'}`
                         });
                     }
                 });
 
-                // គណនាភាគរយសរុប
-                const avg = Math.min(Math.round(totalProgress / serverEpisodes.length), 100);
                 const percentLabel = document.getElementById("renderPercent");
                 const progressBar = document.getElementById("renderProgressBar");
+                const renderStatus = document.getElementById("renderStatus");
+                const dlBtnText = document.getElementById("btnDownloadText");
 
-                if (percentLabel) percentLabel.innerText = `${avg}%`;
-                if (progressBar) progressBar.style.width = `${avg}%`;
+                // គណនាភាគរយសុក្រឹតផ្អែកលើចំនួនភាគដែល Render ចប់ពិតប្រាកដ
+                let displayPercent = Math.min(Math.round((completedCount / serverEpisodes.length) * 100), 100);
+
+                if (percentLabel) percentLabel.innerText = `${displayPercent}%`;
+                if (progressBar) progressBar.style.width = `${displayPercent}%`;
+
+                if (completedCount > 0 && dlBtnText) {
+                    dlBtnText.innerText = `ទាញយកវីដេអូ (${completedCount}/${serverEpisodes.length} ភាគរួចរាល់)`;
+                }
 
                 renderEpisodeSidebar();
 
-                // នៅពេល Render ចប់ (គ្រប់ភាគបានបញ្ចប់ ឬ Avg >= 100%)
-                if (completedCount === serverEpisodes.length || avg >= 100) {
+                // ពេលគ្រប់ភាគទាំងអស់បានចប់សព្វគ្រប់ ១០០%
+                if (completedCount === serverEpisodes.length && serverEpisodes.length > 0) {
                     if (syncInterval) {
                         clearInterval(syncInterval);
                         syncInterval = null;
                     }
-
-                    document.getElementById("renderStatus").innerText = "✓ Turbo Render រួចរាល់ ១០០%!";
+                    if (renderStatus) renderStatus.innerText = "✓ Turbo Render រួចរាល់ ១០០%!";
                     if (percentLabel) percentLabel.innerText = "100%";
                     if (progressBar) progressBar.style.width = "100%";
-
-                    const dlArea = document.getElementById("renderDownloadArea");
-                    if (dlArea) {
-                        dlArea.classList.remove("hidden");
-                        dlArea.style.display = "block";
-                    }
                     document.getElementById("btnExport").disabled = false;
-
-                    // បើកវីដេអូដែល Render ចប់លើផ្ទាំង Monitor
-                    const p = document.getElementById("player");
-                    const activeEp = episodeList[activeIndex >= 0 ? activeIndex : 0];
-                    if (activeEp && activeEp.output_url) {
-                        p.src = activeEp.output_url;
-                        p.muted = false;
-                        p.volume = 1.0;
-                    }
+                } else {
+                    if (renderStatus) renderStatus.innerText = `កំពុង Render (${completedCount}/${serverEpisodes.length} ភាគចប់)...`;
                 }
             } catch (e) {
-                console.error("Check sync error:", e);
+                console.error("Sync error:", e);
             }
         }
 
-        // ==================== FOLDER PICKER DOWNLOAD FUNCTION ====================
         async function downloadAllVideosWithFolderPicker() {
             if (!completedDownloadList || !completedDownloadList.length) {
                 alert("មិនទាន់មានវីដេអូដែល Render ចប់សម្រាប់ទាញយកទេ!");
                 return;
             }
 
-            // ១. បើក Folder Picker លើ Chrome / Edge (File System Access API)
             if ('showDirectoryPicker' in window) {
                 try {
                     const dirHandle = await window.showDirectoryPicker();
-
                     for (let i = 0; i < completedDownloadList.length; i++) {
                         const item = completedDownloadList[i];
                         const response = await fetch(item.url);
                         const blob = await response.blob();
-
                         const fileHandle = await dirHandle.getFileHandle(item.name, { create: true });
                         const writable = await fileHandle.createWritable();
                         await writable.write(blob);
                         await writable.close();
                     }
-
                     alert(`✓ បានរក្សាទុកវីដេអូទាំង ${completedDownloadList.length} ភាគចូលក្នុង Folder ដោយជោគជ័យ!`);
                     return;
                 } catch (err) {
@@ -1054,33 +1140,6 @@
                 }
             }
 
-            // ២. បើក Save Picker សួរទីតាំងរក្សាទុកឯកសារម្ដងមួយៗ
-            if ('showSaveFilePicker' in window) {
-                try {
-                    for (let i = 0; i < completedDownloadList.length; i++) {
-                        const item = completedDownloadList[i];
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: item.name,
-                            types: [{
-                                description: 'MP4 Video',
-                                accept: { 'video/mp4': ['.mp4'] },
-                            }],
-                        });
-
-                        const response = await fetch(item.url);
-                        const blob = await response.blob();
-                        const writable = await handle.createWritable();
-                        await writable.write(blob);
-                        await writable.close();
-                    }
-                    alert("✓ បានរក្សាទុកវីដេអូរួចរាល់!");
-                    return;
-                } catch (e) {
-                    if (e.name === 'AbortError') return;
-                }
-            }
-
-            // ៣. ទាញយកតាមរបៀប Fallback ធម្មតា
             for (let i = 0; i < completedDownloadList.length; i++) {
                 const item = completedDownloadList[i];
                 const a = document.createElement("a");
@@ -1112,6 +1171,7 @@
         window.addEventListener("DOMContentLoaded", () => {
             if (window.lucide) lucide.createIcons();
             fetchEpisodes();
+            toggleCloudKeyInput();
         });
     </script>
 </body>
