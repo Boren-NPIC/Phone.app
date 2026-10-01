@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor
 
+# ស្វែងរក FFmpeg binary executable
 FFMPEG_BIN = "ffmpeg"
 try:
     import imageio_ffmpeg
@@ -48,7 +49,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Precision Engine", version="700.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Full Engine", version="800.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -335,6 +336,30 @@ def translate_batch_with_ai_cloud(texts: List[str], source_lang: str = "auto", c
         results.append(translated or clean)
     return results
 
+def parse_srt_content(srt_text: str) -> list:
+    """មុខងារបំប្លែង SRT Subtitle ទៅជា Timestamp និងអត្ថបទសន្ទនា"""
+    pattern = re.compile(r'(\d+)\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.*?)(?=\n\d+\s*\n|\Z)', re.DOTALL)
+    matches = pattern.findall(srt_text)
+    sub_segments = []
+
+    def srt_time_to_seconds(t_str: str) -> float:
+        t_str = t_str.replace(',', '.')
+        parts = t_str.split(':')
+        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+
+    for match in matches:
+        start_sec = srt_time_to_seconds(match[1])
+        end_sec = srt_time_to_seconds(match[2])
+        raw_text = re.sub(r'<[^>]+>', '', match[3]).strip()
+        raw_text = raw_text.replace('\n', ' ')
+        if raw_text:
+            sub_segments.append({
+                "start": round(start_sec, 2),
+                "end": round(end_sec, 2),
+                "text": raw_text
+            })
+    return sub_segments
+
 @app.get("/")
 async def root_view(response: Response, sid: Optional[str] = Cookie(None)):
     session_id = sid or str(uuid.uuid4().hex[:12])
@@ -378,7 +403,6 @@ async def batch_upload(
     save_user_db(db_file, user_db)
     return {"uploaded": uploaded_eps}
 
-# Real Streaming Support (ដោះស្រាយបញ្ហា Video Monitor វិល loading)
 @app.get("/api/video/{session_id}/{ep_id}")
 async def stream_video(session_id: str, ep_id: str, request: Request):
     _, _, _, db_file = get_session_workspace(session_id)
@@ -475,50 +499,61 @@ async def transcribe_episode(
     save_user_db(db_file, user_db)
 
     video_path = ep["path"]
-    audio_path = uploads_dir / f"{episode_id}_audio.wav"
-
-    subprocess.run([
-        FFMPEG_BIN, "-y", "-i", str(video_path),
-        "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-        str(audio_path)
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
     sub_segments = []
 
-    # Whisper Local Processing
-    with WHISPER_LOCK:
-        whisper = get_shared_whisper()
-        if whisper:
-            try:
-                whisper_lang = None if lang == "auto" else lang
-                segments, _ = whisper.transcribe(
-                    str(audio_path),
-                    vad_filter=True,
-                    vad_parameters=dict(min_silence_duration_ms=250),
-                    language=whisper_lang,
-                    beam_size=1,
-                    temperature=0.0
-                )
-                for seg in segments:
-                    t = seg.text.strip()
-                    if t:
-                        sub_segments.append({
-                            "start": round(seg.start, 2),
-                            "end": round(seg.end, 2),
-                            "text": t
-                        })
-            except Exception as e:
-                print(f"[!] Whisper Error: {e}")
+    # 1. ស្រង់ Subtitle Stream ចេញពីក្នុងវីដេអូដោយស្វ័យប្រវត្តិ
+    srt_out_path = uploads_dir / f"{episode_id}_sub.srt"
+    try:
+        subprocess.run([
+            FFMPEG_BIN, "-y", "-i", str(video_path),
+            "-map", "0:s:0",
+            "-c:s", "srt",
+            str(srt_out_path)
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # Fallback ពិតប្រាកដប្រសិនជាវីដេអូគ្មានការនិយាយសោះ
+        if srt_out_path.exists() and os.path.getsize(srt_out_path) > 30:
+            with open(srt_out_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            sub_segments = parse_srt_content(content)
+            if sub_segments:
+                print(f"[✓] ចាប់ Subtitle ពីសាច់វីដេអូបាន {len(sub_segments)} ឃ្លា")
+    except Exception as e:
+        print(f"[!] បរាជ័យក្នុងការស្រង់ Subtitle: {e}")
+
+    # 2. បើវីដេអូគ្មាន Subtitle -> ស្ដាប់សំឡេងតាម Whisper
     if not sub_segments:
-        total_dur = get_media_duration(str(audio_path)) or 10.0
-        sub_segments.append({
-            "start": 0.0,
-            "end": round(min(3.5, total_dur), 2),
-            "text": "សួស្តី"
-        })
+        audio_path = uploads_dir / f"{episode_id}_audio.wav"
+        subprocess.run([
+            FFMPEG_BIN, "-y", "-i", str(video_path),
+            "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+            str(audio_path)
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+        with WHISPER_LOCK:
+            whisper = get_shared_whisper()
+            if whisper:
+                try:
+                    whisper_lang = None if lang == "auto" else lang
+                    segments, _ = whisper.transcribe(
+                        str(audio_path),
+                        vad_filter=True,
+                        vad_parameters=dict(min_silence_duration_ms=250),
+                        language=whisper_lang,
+                        beam_size=1,
+                        temperature=0.0
+                    )
+                    for seg in segments:
+                        t = seg.text.strip()
+                        if t:
+                            sub_segments.append({
+                                "start": round(seg.start, 2),
+                                "end": round(seg.end, 2),
+                                "text": t
+                            })
+                except Exception as e:
+                    print(f"[!] Whisper Error: {e}")
+
+    # 3. បកប្រែជាភាសាខ្មែរតាម AI
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_ai_cloud(orig_texts, source_lang=lang, cloud_type=model_size, cloud_key=cloud_key)
 
