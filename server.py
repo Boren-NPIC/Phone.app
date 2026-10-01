@@ -9,9 +9,36 @@ import urllib.parse
 import urllib.request
 import json
 import re
+import logging
 from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor
+
+# --- កម្ចាត់ WinError 10054 និង ProactorBasePipeTransport Crash លើ Windows ---
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
+
+    try:
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+
+        def silence_connection_lost(self, exc):
+            try:
+                if hasattr(self, "_sock") and self._sock:
+                    try:
+                        self._sock.shutdown(1)
+                    except Exception:
+                        pass
+                    self._sock.close()
+            except Exception:
+                pass
+
+        _ProactorBasePipeTransport._call_connection_lost = silence_connection_lost
+    except Exception:
+        pass
+# -------------------------------------------------------------------------
 
 FFMPEG_BIN = "ffmpeg"
 try:
@@ -26,16 +53,10 @@ try:
 except Exception:
     pass
 
-if sys.platform == "win32":
-    try:
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    except Exception:
-        pass
-
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Cookie, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 try:
@@ -48,7 +69,19 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Real Local & Cloud Engine", version="1700.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Audible Voice & Pure BGM Engine", version="2700.0.0")
+
+# Middleware ទប់ស្កាត់ Connection Reset Noise
+@app.middleware("http")
+async def suppress_connection_reset_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except (ConnectionResetError, BrokenPipeError):
+        return Response(status_code=204)
+    except Exception as e:
+        if "10054" in str(e) or "connection_lost" in str(e):
+            return Response(status_code=204)
+        raise e
 
 app.add_middleware(
     CORSMiddleware,
@@ -112,13 +145,6 @@ class BatchRenderConfig(BaseModel):
     resolution: str = "1080p"
     dialogues_map: Optional[dict] = None
 
-def format_ass_time(seconds: float) -> str:
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = int(seconds % 60)
-    cs = int((seconds - int(seconds)) * 100)
-    return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
-
 def get_media_duration(file_path: str) -> float:
     try:
         cmd = [FFMPEG_BIN, "-i", str(file_path)]
@@ -130,6 +156,52 @@ def get_media_duration(file_path: str) -> float:
         return 0.0
     except Exception:
         return 0.0
+
+def resolve_khmer_voice(speaker_raw: str) -> str:
+    s = str(speaker_raw).lower()
+    if any(k in s for k in ["sreymom", "ស្រី", "female", "girl", "woman"]):
+        return "km-KH-SreymomNeural"
+    return "km-KH-PisethNeural"
+
+def detect_voice_pitch_gender(audio_path: Path, start_sec: float, end_sec: float) -> str:
+    dur = max(0.4, end_sec - start_sec)
+    try:
+        cut_cmd = [
+            FFMPEG_BIN, "-y",
+            "-ss", f"{start_sec:.3f}",
+            "-t", f"{dur:.3f}",
+            "-i", str(audio_path),
+            "-af", "highpass=f=80,lowpass=f=400,astats=metadata=1:reset=1",
+            "-f", "null", "-"
+        ]
+        res = subprocess.run(cut_cmd, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True, errors="replace")
+        zcr_matches = re.findall(r"Zero crossing rate:\s*(\d+\.?\d*)", res.stderr)
+        if zcr_matches:
+            avg_zcr = sum([float(x) for x in zcr_matches]) / len(zcr_matches)
+            if avg_zcr >= 0.045:
+                return "sreymom"
+            elif avg_zcr < 0.040:
+                return "piseth"
+
+        spec_cmd = [
+            FFMPEG_BIN, "-y",
+            "-ss", f"{start_sec:.3f}",
+            "-t", f"{dur:.3f}",
+            "-i", str(audio_path),
+            "-af", "bandpass=frequency=240:width_type=h:width=120,volumedetect",
+            "-f", "null", "-"
+        ]
+        res_spec = subprocess.run(spec_cmd, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True, errors="replace")
+        mean_vol = re.search(r"mean_volume:\s*(-?\d+\.?\d*)\s*dB", res_spec.stderr)
+        if mean_vol:
+            db_val = float(mean_vol.group(1))
+            if db_val > -36.0:
+                return "sreymom"
+            else:
+                return "piseth"
+    except Exception:
+        pass
+    return "piseth"
 
 def _run_edge_tts_isolated(text: str, voice: str, target_mp3: str) -> bool:
     async def _async_call():
@@ -154,7 +226,7 @@ def generate_khmer_audio_fast(text: str, voice: str, out_wav_path: str) -> bool:
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_run_edge_tts_isolated, clean_text, voice, str(temp_mp3))
             try:
-                success = future.result(timeout=3.5)
+                success = future.result(timeout=4.0)
             except Exception:
                 success = False
 
@@ -180,6 +252,7 @@ def generate_khmer_audio_fast(text: str, voice: str, out_wav_path: str) -> bool:
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
 
+    # Convert ទៅជា PCM 16-bit 48000Hz Stereo ស្តង់ដារ
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(temp_mp3),
         "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le",
@@ -236,33 +309,15 @@ def get_shared_whisper():
                 GLOBAL_WHISPER_INSTANCE = None
     return GLOBAL_WHISPER_INSTANCE
 
-def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) -> str:
-    female_regex = r"(她|女人|女孩|小姐|妈妈|妻子|老婆|姐姐|妹妹|夫人|太太|娘|珊珊|小雪|she|her|woman|girl|lady|miss|mrs|mother|sister|wife)"
-    male_regex = r"(他|男人|男孩|先生|爸爸|丈夫|老公|哥哥|弟弟|少爷|老爹|林总|王总|he|him|his|man|boy|mr|sir|father|brother|husband)"
-    female_km = r"(នាង|នារី|ស្រី|ម៉ាក់|ម្ដាយ|បងស្រី|ប្អូនស្រី|ភរិយា|ប្រពន្ធ|កញ្ញា|អ្នកស្រី|អូន|ចៅស្រី)"
-    male_km = r"(គាត់|បុរស|ប្រុស|ប៉ា|ឪពុក|បងប្រុស|ប្អូនប្រុស|ស្វាមី|ប្ដី|លោក|បង|ចៅប្រុស)"
-
-    orig_lower = orig_text.lower()
-    if re.search(female_regex, orig_lower) or re.search(female_km, khmer_text):
-        return "sreymom"
-    if re.search(male_regex, orig_lower) or re.search(male_km, khmer_text):
-        return "piseth"
-
-    return "sreymom" if last_speaker == "piseth" else "piseth"
-
-# មុខងារបកប្រែពាក្យចិនទៅខ្មែរតាម MWAPI (Claude / GPT-4o-mini)
-def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
+def translate_dialogues_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
     if not texts:
         return []
 
     lang_desc = "Chinese or English" if source_lang in ["auto", ""] else ("Chinese" if source_lang == "zh" else "English")
     system_prompt = (
-        f"You are a professional film voiceover translator. Translate the following array of {lang_desc} "
-        "movie dialogue lines into natural spoken Khmer for direct character dubbing. "
-        "RULES:\n"
-        "1. Match conversational emotion and context.\n"
-        "2. Keep Khmer translations concise and punchy to fit lip-sync timing.\n"
-        "3. Output MUST be ONLY a strict JSON array of translated Khmer strings."
+        f"You are a professional film dubbing translator. Translate the following array of {lang_desc} "
+        "dialogues into natural, spoken Khmer for direct character dubbing. "
+        "Keep the phrases concise for sync. Return ONLY a strict JSON array of translated strings."
     )
 
     if cloud_key:
@@ -282,18 +337,17 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
                     data=json.dumps(req_data).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
                 )
-                with urllib.request.urlopen(req, timeout=15) as resp:
+                with urllib.request.urlopen(req, timeout=16) as resp:
                     res_json = json.loads(resp.read().decode("utf-8"))
                     content_str = res_json["choices"][0]["message"]["content"].strip()
                     match = re.search(r'\[.*\]', content_str, re.DOTALL)
                     if match:
                         parsed = json.loads(match.group(0))
                         if len(parsed) == len(texts):
-                            return [str(p) for p in parsed]
+                            return [str(p).strip() for p in parsed]
             except Exception:
                 continue
 
-    # Fallback Translate
     results = []
     src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
     for txt in texts:
@@ -310,6 +364,23 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
             translated = txt
         results.append(translated or txt)
     return results
+
+def extract_pure_bgm_sfx_fast(video_path: str, output_bgm_wav: Path):
+    vocal_strip_filter = (
+        "stereotools=mlev=0.01:slev=1.20,"
+        "highpass=f=45,lowpass=f=17500,"
+        "equalizer=f=350:t=q:w=1.8:g=-14,"
+        "equalizer=f=1100:t=q:w=1.5:g=-15,"
+        "volume=0.9"
+    )
+    subprocess.run([
+        FFMPEG_BIN, "-y", "-i", str(video_path),
+        "-vn",
+        "-af", vocal_strip_filter,
+        "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le",
+        str(output_bgm_wav)
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return output_bgm_wav.exists() and output_bgm_wav.stat().st_size > 1000
 
 @app.get("/")
 async def root_view(response: Response, sid: Optional[str] = Cookie(None)):
@@ -355,42 +426,21 @@ async def batch_upload(
     return {"uploaded": uploaded_eps}
 
 @app.get("/api/video/{session_id}/{ep_id}")
-async def stream_video(session_id: str, ep_id: str, request: Request):
+async def stream_video(session_id: str, ep_id: str):
     _, _, _, db_file = get_session_workspace(session_id)
     user_db = load_user_db(db_file)
     if ep_id not in user_db or not os.path.exists(user_db[ep_id]["path"]):
         raise HTTPException(status_code=404, detail="Video not found")
 
-    path = Path(user_db[ep_id]["path"])
-    file_size = path.stat().st_size
-    range_header = request.headers.get("range")
-
-    if range_header:
-        byte1, byte2 = range_header.replace("bytes=", "").split("-")
-        start = int(byte1)
-        end = int(byte2) if byte2 else file_size - 1
-        length = end - start + 1
-
-        def iterfile():
-            with open(path, "rb") as f:
-                f.seek(start)
-                bytes_left = length
-                while bytes_left > 0:
-                    chunk = f.read(min(bytes_left, 64 * 1024))
-                    if not chunk:
-                        break
-                    bytes_left -= len(chunk)
-                    yield chunk
-
-        headers = {
-            "Content-Range": f"bytes {start}-{end}/{file_size}",
+    video_path = Path(user_db[ep_id]["path"])
+    return FileResponse(
+        path=str(video_path),
+        media_type="video/mp4",
+        headers={
             "Accept-Ranges": "bytes",
-            "Content-Length": str(length),
-            "Content-Type": "video/mp4",
+            "Connection": "keep-alive"
         }
-        return StreamingResponse(iterfile(), status_code=206, headers=headers)
-
-    return FileResponse(path=str(path), media_type="video/mp4", headers={"Accept-Ranges": "bytes"})
+    )
 
 @app.get("/api/episodes")
 async def get_episodes(session_id: str = "", sid: Optional[str] = Cookie(None)):
@@ -453,7 +503,6 @@ async def transcribe_episode(
     video_path = ep["path"]
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
 
-    # បំបែកសំឡេង 16000Hz Mono
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
         "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
@@ -462,7 +511,6 @@ async def transcribe_episode(
 
     sub_segments = []
 
-    # 1. ដំណើរការ Whisper ផ្ទាល់ដើម្បីស្ដាប់សំឡេងចិន/អង់គ្លេសពិតប្រាកដ
     with WHISPER_LOCK:
         whisper = get_shared_whisper()
         if whisper:
@@ -480,6 +528,7 @@ async def transcribe_episode(
                     t = seg.text.strip()
                     if t:
                         sub_segments.append({
+                            "id": len(sub_segments) + 1,
                             "start": round(seg.start, 2),
                             "end": round(seg.end, 2),
                             "text": t
@@ -487,32 +536,45 @@ async def transcribe_episode(
             except Exception as e:
                 print(f"[!] Whisper Error: {e}")
 
-    # បើគ្មានសំឡេងនិយាយសោះ
     if not sub_segments:
         total_dur = get_media_duration(str(audio_path)) or 10.0
         sub_segments.append({
+            "id": 1,
             "start": 0.0,
             "end": round(min(3.5, total_dur), 2),
             "text": "你好" if lang in ["zh", "auto"] else "Hello"
         })
 
-    # 2. បកប្រែអត្ថបទចិនពិតប្រាកដជាភាសាខ្មែរតាម MWAPI Key (Claude/GPT)
     orig_texts = [s["text"] for s in sub_segments]
-    khmer_translations = translate_batch_with_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
+    khmer_translations = translate_dialogues_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
 
     dialogues = []
-    last_spk = "piseth"
+    female_kw = r"(她|女人|女孩|小姐|妈妈|母亲|妻子|老婆|姐姐|妹妹|夫人|太太|阿姨|小姐|女|she|her|woman|girl|lady|miss|mrs|mother|sister|wife)"
+    male_kw = r"(他|男人|男孩|先生|爸爸|父亲|丈夫|老公|哥哥|弟弟|少爷|老爹|林总|王总|徐总|董事长|总裁|男|he|him|his|man|boy|mr|sir|father|brother|husband)"
+
     for idx, orig in enumerate(sub_segments):
         f_km = khmer_translations[idx] if idx < len(khmer_translations) else orig["text"]
-        spk = "piseth" if speaker_mode == "male" else ("sreymom" if speaker_mode == "female" else analyze_smart_speaker(orig["text"], f_km, last_spk))
-        last_spk = spk
+
+        if speaker_mode == "male":
+            detected_speaker = "piseth"
+        elif speaker_mode == "female":
+            detected_speaker = "sreymom"
+        else:
+            pitch_gender = detect_voice_pitch_gender(audio_path, orig["start"], orig["end"])
+            if re.search(female_kw, orig["text"].lower()):
+                detected_speaker = "sreymom"
+            elif re.search(male_kw, orig["text"].lower()):
+                detected_speaker = "piseth"
+            else:
+                detected_speaker = pitch_gender
+
         dialogues.append({
             "id": idx + 1,
             "start": orig["start"],
             "end": orig["end"],
             "original_text": orig["text"],
             "khmer_text": f_km,
-            "speaker": spk
+            "speaker": detected_speaker
         })
 
     user_db = load_user_db(db_file)
@@ -533,7 +595,7 @@ async def preview_single_tts(
     active_sid = session_id or sid or "default_user"
     _, _, processed_dir, _ = get_session_workspace(active_sid)
     clean_text = text.strip() or "សួស្តី"
-    voice = "km-KH-SreymomNeural" if speaker == "sreymom" else "km-KH-PisethNeural"
+    voice = resolve_khmer_voice(speaker)
     uid = uuid.uuid4().hex[:6]
     out_wav = processed_dir / f"prev_{uid}.wav"
 
@@ -551,6 +613,7 @@ async def download_user_file(session_id: str, filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename=filename, media_type="video/mp4")
 
+# Turbo Render: ធានាថាសំឡេងខ្មែរ (ពិសិដ្ឋ/ស្រីមុំ) ឮច្បាស់ពេញទំហឹង + រក្សា BGM & SFX
 def render_worker(active_sid: str, cfg_dict: dict):
     with RENDER_LOCK:
         _, _, processed_dir, db_file = get_session_workspace(active_sid)
@@ -563,96 +626,153 @@ def render_worker(active_sid: str, cfg_dict: dict):
 
             ep = user_db[ep_id]
             ep["status"] = "rendering"
-            ep["progress"] = 25
+            ep["progress"] = 15
             save_user_db(db_file, user_db)
 
             dialogues = cfg_dict.get("dialogues_map", {}).get(ep_id) or ep.get("dialogues", [])
             video_in = ep["path"]
-            ass_file = processed_dir / f"{ep_id}.ass"
-
-            res_w, res_h = (1080, 1920) if cfg_dict.get("aspect_ratio") != "16:9" else (1920, 1080)
-            font_size = 50 if cfg_dict.get("resolution") != "4k" else 94
-
-            with open(ass_file, "w", encoding="utf-8") as f:
-                f.write(f"[Script Info]\nTitle: Direct Dub\nScriptType: v4.00+\nPlayResX: {res_w}\nPlayResY: {res_h}\n\n")
-                f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Alignment, MarginV, Outline, Shadow\n")
-                f.write(f"Style: Default,Khmer OS Siemreap,{font_size},{cfg_dict.get('sub_color', '&H00FFFF')},&H00000000,&H80000000,1,0,2,85,2.5,1.2\n\n")
-                f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n")
-                for d in dialogues:
-                    it = d if isinstance(d, dict) else d.dict()
-                    s = format_ass_time(it["start"])
-                    e = format_ass_time(it["end"])
-                    txt = it.get("khmer_text", "").replace("\n", "\\N")
-                    f.write(f"Dialogue: 0,{s},{e},Default,,0,0,0,,{txt}\n")
-
             total_video_duration = get_media_duration(str(video_in)) or 60.0
 
-            clips_results = []
-            for idx, d in enumerate(dialogues):
+            # ១. ទាញយក BGM & SFX ដើម
+            pure_bgm_track = processed_dir / f"{ep_id}_bgm_pure.wav"
+            extract_pure_bgm_sfx_fast(video_in, pure_bgm_track)
+
+            user_db = load_user_db(db_file)
+            user_db[ep_id]["progress"] = 35
+            save_user_db(db_file, user_db)
+
+            # ២. បង្កើតសំឡេងខ្មែរស្របគ្នា ៨ ឃ្លាក្នុងពេលតែមួយ
+            def process_single_clip(idx_item):
+                idx, d = idx_item
                 it = d if isinstance(d, dict) else d.dict()
                 txt = it.get("khmer_text", "").strip()
                 if not txt:
-                    continue
-                v_id = "km-KH-SreymomNeural" if it.get("speaker") == "sreymom" else "km-KH-PisethNeural"
+                    return None
+                
+                spk_val = it.get("speaker", "piseth")
+                v_id = resolve_khmer_voice(spk_val)
+
                 r_wav = processed_dir / f"{ep_id}_r_{idx}.wav"
                 f_wav = processed_dir / f"{ep_id}_f_{idx}.wav"
 
                 if generate_khmer_audio_fast(txt, v_id, str(r_wav)):
-                    fit_audio_exact_to_scene(str(r_wav), max(0.35, float(it["end"]) - float(it["start"])), str(f_wav))
-                    clips_results.append({
+                    scene_dur = max(0.35, float(it["end"]) - float(it["start"]))
+                    fit_audio_exact_to_scene(str(r_wav), scene_dur, str(f_wav))
+                    try:
+                        r_wav.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    return {
                         "start": float(it["start"]),
                         "duration": get_media_duration(str(f_wav)),
                         "path": str(f_wav)
-                    })
+                    }
+                return None
+
+            clips_results = []
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                results = list(executor.map(process_single_clip, enumerate(dialogues)))
+                clips_results = [r for r in results if r is not None]
+
+            clips_results.sort(key=lambda x: x["start"])
 
             user_db = load_user_db(db_file)
             user_db[ep_id]["progress"] = 70
             save_user_db(db_file, user_db)
 
+            # ៣. ផ្គុំ Dub Track ខ្មែរ ដោយបញ្ចូល Base Silence មួយដើម្បីធានាថា Track មិនដាច់
             dub_track = processed_dir / f"{ep_id}_dub.wav"
-            manifest_txt = processed_dir / f"{ep_id}_mf.txt"
-            current_cursor = 0.0
-
-            sil_master = processed_dir / "sil.wav"
-            if not sil_master.exists():
-                subprocess.run([FFMPEG_BIN, "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", "30", "-c:a", "pcm_s16le", str(sil_master)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-            with open(manifest_txt, "w", encoding="utf-8") as f_mf:
+            if clips_results:
+                inputs_cmd = [
+                    "-f", "lavfi",
+                    "-t", f"{total_video_duration:.3f}",
+                    "-i", "anullsrc=r=48000:cl=stereo"
+                ]
+                filter_parts = []
                 for idx, c in enumerate(clips_results):
-                    gap = c["start"] - current_cursor
-                    if gap > 0.04:
-                        s_chunk = processed_dir / f"{ep_id}_s_{idx}.wav"
-                        subprocess.run([FFMPEG_BIN, "-y", "-i", str(sil_master), "-t", f"{gap:.3f}", "-c", "copy", str(s_chunk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        f_mf.write(f"file '{str(s_chunk).replace(os.sep, '/')}'\n")
-                    f_mf.write(f"file '{c['path'].replace(os.sep, '/')}'\n")
-                    current_cursor = c["start"] + c["duration"]
+                    inputs_cmd.extend(["-i", c["path"]])
+                    delay_ms = int(max(0, c["start"]) * 1000)
+                    filter_parts.append(f"[{idx+1}:a]adelay={delay_ms}|{delay_ms}[a{idx+1}]")
+                
+                all_inputs = "[0:a]" + "".join([f"[a{i+1}]" for i in range(len(clips_results))])
+                filter_complex = f"{';'.join(filter_parts)};{all_inputs}amix=inputs={len(clips_results)+1}:dropout_transition=0:normalize=0[aout]"
+                
+                cmd_mix = [
+                    FFMPEG_BIN, "-y",
+                    *inputs_cmd,
+                    "-filter_complex", filter_complex,
+                    "-map", "[aout]",
+                    "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le",
+                    str(dub_track)
+                ]
+                subprocess.run(cmd_mix, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run([
+                    FFMPEG_BIN, "-y", "-f", "lavfi",
+                    "-i", f"anullsrc=r=48000:cl=stereo", "-t", f"{total_video_duration}",
+                    "-c:a", "pcm_s16le", str(dub_track)
+                ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-                if total_video_duration > current_cursor:
-                    e_chunk = processed_dir / f"{ep_id}_e.wav"
-                    subprocess.run([FFMPEG_BIN, "-y", "-i", str(sil_master), "-t", f"{total_video_duration - current_cursor:.3f}", "-c", "copy", str(e_chunk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    f_mf.write(f"file '{str(e_chunk).replace(os.sep, '/')}'\n")
-
-            subprocess.run([FFMPEG_BIN, "-y", "-f", "concat", "-safe", "0", "-i", str(manifest_txt), "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", str(dub_track)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            user_db = load_user_db(db_file)
+            user_db[ep_id]["progress"] = 85
+            save_user_db(db_file, user_db)
 
             out_name = f"dubbed_{ep.get('code', 'ep')}_{uuid.uuid4().hex[:6]}.mp4"
             final_mp4 = processed_dir / out_name
 
-            dub_vol = cfg_dict.get("dub_volume", 2.20)
-            master_audio_filter = f"volume={dub_vol},alimiter=limit=0.98"
+            dub_vol = float(cfg_dict.get("dub_volume", 2.20))
 
-            cmd = [
+            # ៤. Master Audio Mix: ធានាថាសំឡេងខ្មែរ [1:a] ឮខ្លាំងច្បាស់ 100% លើកដំបូង + BGM [0:a] បន្ថយមកត្រឹម 0.28
+            master_filter = (
+                f"[1:a]volume={dub_vol}[dub_loud];"
+                f"[0:a]volume=0.28[bgm_soft];"
+                f"[bgm_soft][dub_loud]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.98[final_a]"
+            )
+
+            cmd_final = [
                 FFMPEG_BIN, "-y",
-                "-i", str(video_in),
-                "-i", str(dub_track),
-                "-map", "0:v:0",
-                "-map", "1:a:0",
-                "-filter:a", master_audio_filter,
+                "-i", str(pure_bgm_track), # 0: ភ្លេង BGM + SFX ដើម
+                "-i", str(dub_track),      # 1: សំឡេងខ្មែរ (ពិសិដ្ឋ/ស្រីមុំ)
+                "-i", str(video_in),       # 2: វីដេអូរូបភាពដើម
+                "-map", "2:v:0",
+                "-filter_complex", master_filter,
+                "-map", "[final_a]",
                 "-c:v", "copy",
                 "-c:a", "aac",
-                "-b:a", "192k",
+                "-b:a", "256k",
+                "-shortest",
                 str(final_mp4)
             ]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            res = subprocess.run(cmd_final, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+
+            # Fallback ក្នុងករណី filter_complex មានបញ្ហា
+            if not final_mp4.exists() or final_mp4.stat().st_size < 1000:
+                cmd_fallback = [
+                    FFMPEG_BIN, "-y",
+                    "-i", str(video_in),
+                    "-i", str(dub_track),
+                    "-map", "0:v:0",
+                    "-map", "1:a:0",
+                    "-filter:a", f"volume={dub_vol},alimiter=limit=0.98",
+                    "-c:v", "copy",
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    "-shortest",
+                    str(final_mp4)
+                ]
+                subprocess.run(cmd_fallback, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            # សម្អាត Files
+            for c in clips_results:
+                try:
+                    Path(c["path"]).unlink(missing_ok=True)
+                except Exception:
+                    pass
+            try:
+                pure_bgm_track.unlink(missing_ok=True)
+                dub_track.unlink(missing_ok=True)
+            except Exception:
+                pass
 
             user_db = load_user_db(db_file)
             if ep_id in user_db:
@@ -671,22 +791,34 @@ async def start_batch_render(cfg: BatchRenderConfig, sid: Optional[str] = Cookie
 if __name__ == "__main__":
     import uvicorn
     import webbrowser
-    import threading
     import time
+
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
 
     port = int(os.environ.get("PORT", 8080))
 
+    if sys.platform == "win32":
+        try:
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        except Exception:
+            pass
+
     def open_browser():
-        time.sleep(1.2)  # រង់ចាំឱ្យ server ចាប់ផ្តើមស្រួលបួល
+        time.sleep(1.2)
         target_url = f"http://127.0.0.1:{port}"
-        print(f"\n[✓] កំពុងបើកកម្មវិធីលើ Browser: {target_url}\n")
+        print(f"\n[✓] KhmerDub Studio Pro កំពុងដំណើរការ: {target_url}\n")
         try:
             webbrowser.open(target_url)
         except Exception:
             pass
 
-    # បញ្ជាឱ្យបើក browser ដោយស្វ័យប្រវត្តិ
     threading.Thread(target=open_browser, daemon=True).start()
-
-    # ដំណើរការ Localhost Server
-    uvicorn.run("server:app", host="127.0.0.1", port=port, reload=False)
+    uvicorn.run(
+        "server:app",
+        host="127.0.0.1",
+        port=port,
+        loop="asyncio",
+        log_level="warning",
+        reload=False
+    )

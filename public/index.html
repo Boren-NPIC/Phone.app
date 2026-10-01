@@ -193,8 +193,9 @@
 
                 <div id="videoMonitorWrapper"
                     class="w-full aspect-[9/16] max-h-56 bg-black rounded-xl overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto shadow-inner">
-                    <video id="player" playsinline controls class="w-full h-full object-contain hidden"
-                        ontimeupdate="onVideoTimeUpdate()" onloadedmetadata="onVideoLoaded()"></video>
+                    <video id="player" playsinline controls preload="metadata"
+                        class="w-full h-full object-contain hidden" ontimeupdate="onVideoTimeUpdate()"
+                        onloadedmetadata="onVideoLoaded()"></video>
                     <div id="emptyPlayerNotice" class="text-center p-4">
                         <i data-lucide="film" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
                         <span class="text-[11px] text-slate-500 font-medium">ផ្ទាំងបញ្ចាំងវីដេអូ</span>
@@ -309,12 +310,13 @@
                         style="width: 0%"></div>
                 </div>
 
+                <!-- Render Download Area -->
                 <div id="renderDownloadArea" class="pt-1 hidden">
-                    <a id="btnDirectDownload" href="#" download
+                    <button id="btnOpenDownloadModal" onclick="openDownloadModal()"
                         class="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs">
                         <i data-lucide="download" class="w-4 h-4 text-white"></i>
                         <span id="btnDownloadText">ទាញយកវីដេអូ</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -393,6 +395,35 @@
             </div>
         </div>
     </footer>
+
+    <!-- MODAL: ជ្រើសរើសភាគដើម្បីទាញយក -->
+    <div id="downloadModal"
+        class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-studio-card border border-studio-border w-full max-w-md rounded-2xl p-4 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between border-b border-studio-border pb-2">
+                <h3 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <i data-lucide="folder-down" class="w-4 h-4"></i> ជ្រើសរើសវីដេអូដែលចង់ទាញយក
+                </h3>
+                <button onclick="closeDownloadModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- បញ្ជីភាគដែល render រួចរាល់ -->
+            <div id="downloadModalList" class="max-h-60 overflow-y-auto space-y-2 pr-1"></div>
+
+            <div class="pt-2 border-t border-studio-border flex justify-between gap-2">
+                <button onclick="downloadAllRenderedFiles()"
+                    class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95">
+                    <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> ទាញយកទាំងអស់ (រើស Folder)
+                </button>
+                <button onclick="closeDownloadModal()"
+                    class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+                    បិទ
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         function getSessionId() {
@@ -474,7 +505,7 @@
                 item.className = `p-2 rounded-lg border transition text-xs relative group ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80 ring-1 ring-cyan-500' : 'bg-studio-card border-studio-border'}`;
 
                 const isDone = (ep.status === "completed" || ep.progress === 100) && ep.output_url;
-                const dlBtn = isDone ? `<a href="${ep.output_url}" download onclick="event.stopPropagation()" class="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition"><i data-lucide="download" class="w-3.5 h-3.5"></i></a>` : '';
+                const dlBtn = isDone ? `<button onclick="event.stopPropagation(); downloadSingleEpisodeWithPicker('${ep.output_url}', '${ep.code}_${ep.filename || 'dubbed'}.mp4')" class="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition"><i data-lucide="download" class="w-3.5 h-3.5"></i></button>` : '';
 
                 item.innerHTML = `
           <div class="flex items-center justify-between mb-1">
@@ -484,7 +515,7 @@
             </span>
             <div class="flex items-center gap-1">
               ${dlBtn}
-              <span class="text-[9px] ${ep.status === 'transcribed' ? 'text-emerald-400 font-bold' : 'text-cyan-300'} font-mono">${ep.status}</span>
+              <span class="text-[9px] ${ep.status === 'transcribed' ? 'text-emerald-400 font-bold' : (ep.status === 'completed' ? 'text-emerald-300 font-bold' : 'text-cyan-300')} font-mono">${ep.status}</span>
               <button onclick="event.stopPropagation(); deleteSingleEpisode('${ep.id}', ${idx})" title="លុបភាគនេះ" class="text-slate-500 hover:text-rose-400 p-0.5 rounded transition">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
               </button>
@@ -895,6 +926,114 @@
             }
         }
 
+        /* មុខងារទាញយក File មួយៗដោយជ្រើសរើសទីតាំងផ្ទុក (Save As Picker) */
+        async function downloadSingleEpisodeWithPicker(epUrl, defaultName) {
+            try {
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultName || 'dubbed_video.mp4',
+                        types: [{
+                            description: 'MP4 Video File',
+                            accept: { 'video/mp4': ['.mp4'] }
+                        }]
+                    });
+
+                    const response = await fetch(epUrl);
+                    const blob = await response.blob();
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.warn("Picker bypassed:", err);
+            }
+
+            const a = document.createElement("a");
+            a.href = epUrl;
+            a.download = defaultName || "dubbed_video.mp4";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        /* មុខងារទាញយកទាំងអស់ដោយជ្រើសរើស Folder តែម្តង (Directory Picker) */
+        async function downloadAllRenderedFiles() {
+            const completedEps = episodeList.filter(ep => ep.status === "completed" && ep.output_url);
+            if (!completedEps.length) return;
+
+            try {
+                if (window.showDirectoryPicker) {
+                    const dirHandle = await window.showDirectoryPicker();
+
+                    for (let i = 0; i < completedEps.length; i++) {
+                        const ep = completedEps[i];
+                        const fileName = `${ep.code}_${ep.filename || 'dubbed'}.mp4`;
+
+                        const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+                        const response = await fetch(ep.output_url);
+                        const blob = await response.blob();
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                    }
+                    alert("✓ បានទាញយក និងរក្សាទុកវីដេអូគ្រប់ភាគចូលក្នុង Folder ជោគជ័យ!");
+                    return;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.warn("Directory Picker fallback:", err);
+            }
+
+            completedEps.forEach((ep, i) => {
+                setTimeout(() => {
+                    const a = document.createElement("a");
+                    a.href = ep.output_url;
+                    a.download = `${ep.code}_${ep.filename || 'dubbed'}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }, i * 600);
+            });
+        }
+
+        function openDownloadModal() {
+            const modal = document.getElementById("downloadModal");
+            const listContainer = document.getElementById("downloadModalList");
+            listContainer.innerHTML = "";
+
+            const completedEps = episodeList.filter(ep => ep.status === "completed" && ep.output_url);
+
+            if (!completedEps.length) {
+                listContainer.innerHTML = `<div class="text-center text-slate-400 text-xs py-4">មិនទាន់មានវីដេអូដែល Render ចប់នៅឡើយទេ</div>`;
+            } else {
+                completedEps.forEach(ep => {
+                    const item = document.createElement("div");
+                    item.className = "flex items-center justify-between p-2 rounded-xl bg-studio-base border border-studio-border hover:border-emerald-500/50 transition";
+                    const fileName = `${ep.code}_${ep.filename || 'dubbed'}.mp4`;
+
+                    item.innerHTML = `
+            <div class="flex items-center gap-2 truncate">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 text-[10px] font-mono font-bold">${ep.code}</span>
+              <span class="text-white text-xs truncate max-w-[190px]">${ep.filename}</span>
+            </div>
+            <button onclick="downloadSingleEpisodeWithPicker('${ep.output_url}', '${fileName}')" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 shadow active:scale-95 transition">
+              <i data-lucide="download" class="w-3 h-3"></i> ទាញយក
+            </button>
+          `;
+                    listContainer.appendChild(item);
+                });
+            }
+
+            if (window.lucide) lucide.createIcons();
+            modal.classList.remove("hidden");
+        }
+
+        function closeDownloadModal() {
+            document.getElementById("downloadModal").classList.add("hidden");
+        }
+
         async function checkSync() {
             try {
                 const res = await fetch(`/api/episodes?session_id=${currentSessionId}`);
@@ -904,12 +1043,10 @@
 
                 episodeList = serverEpisodes;
                 let completedCount = 0;
-                let lastOutputUrl = null;
 
                 serverEpisodes.forEach(ep => {
                     if (ep.status === "completed" && ep.output_url) {
                         completedCount++;
-                        lastOutputUrl = ep.output_url;
                     }
                 });
 
@@ -917,11 +1054,9 @@
                 document.getElementById("renderPercent").innerText = `${percent}%`;
                 document.getElementById("renderProgressBar").style.width = `${percent}%`;
 
-                if (completedCount > 0 && lastOutputUrl) {
+                if (completedCount > 0) {
                     const dlArea = document.getElementById("renderDownloadArea");
-                    const dlBtn = document.getElementById("btnDirectDownload");
                     dlArea.classList.remove("hidden");
-                    dlBtn.href = lastOutputUrl;
                     document.getElementById("btnDownloadText").innerText = `ទាញយកវីដេអូ (${completedCount}/${serverEpisodes.length} ភាគរួចរាល់)`;
                 }
 
