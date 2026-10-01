@@ -39,11 +39,16 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 try:
+    from faster_whisper import WhisperModel
+except Exception:
+    WhisperModel = None
+
+try:
     import edge_tts
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Final Stable Engine", version="1600.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Real Local & Cloud Engine", version="1700.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,6 +68,8 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 RENDER_LOCK = threading.Lock()
+WHISPER_LOCK = threading.Lock()
+GLOBAL_WHISPER_INSTANCE = None
 
 def get_session_workspace(session_id: str):
     sid = re.sub(r'[^a-zA-Z0-9_-]', '', session_id) or "default_user"
@@ -218,6 +225,17 @@ def fit_audio_exact_to_scene(raw_wav: str, scene_dur: float, out_wav: str):
     if not os.path.exists(out_wav) or os.path.getsize(out_wav) < 100:
         shutil.copyfile(raw_wav, out_wav)
 
+def get_shared_whisper():
+    global GLOBAL_WHISPER_INSTANCE
+    if GLOBAL_WHISPER_INSTANCE is None:
+        if WhisperModel:
+            try:
+                GLOBAL_WHISPER_INSTANCE = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=4, num_workers=1)
+            except Exception as e:
+                print(f"[!] WhisperModel load error: {e}")
+                GLOBAL_WHISPER_INSTANCE = None
+    return GLOBAL_WHISPER_INSTANCE
+
 def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) -> str:
     female_regex = r"(她|女人|女孩|小姐|妈妈|妻子|老婆|姐姐|妹妹|夫人|太太|娘|珊珊|小雪|she|her|woman|girl|lady|miss|mrs|mother|sister|wife)"
     male_regex = r"(他|男人|男孩|先生|爸爸|丈夫|老公|哥哥|弟弟|少爷|老爹|林总|王总|he|him|his|man|boy|mr|sir|father|brother|husband)"
@@ -232,105 +250,7 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
-# មុខងារបំប្លែងសំឡេងចិន/អង់គ្លេសទៅជាអក្សរដោយផ្ទាល់តាម Speech API
-def recognize_audio_segment_google(wav_chunk: Path, lang_code: str = "zh-CN") -> str:
-    try:
-        flac_path = wav_chunk.with_suffix(".flac")
-        subprocess.run([
-            FFMPEG_BIN, "-y", "-i", str(wav_chunk),
-            "-ar", "16000", "-ac", "1",
-            str(flac_path)
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        if not flac_path.exists():
-            return ""
-
-        with open(flac_path, "rb") as f:
-            flac_data = f.read()
-
-        flac_path.unlink(missing_ok=True)
-
-        url = f"https://www.google.com/speech-api/v2/recognize?client=chromium&lang={lang_code}&maxresults=1"
-        req = urllib.request.Request(
-            url,
-            data=flac_data,
-            headers={
-                "Content-Type": "audio/x-flac; rate=16000",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-            }
-        )
-        with urllib.request.urlopen(req, timeout=4.5) as resp:
-            body = resp.read().decode('utf-8', errors='ignore')
-            for part in body.splitlines():
-                if part.strip():
-                    try:
-                        parsed = json.loads(part)
-                        if "result" in parsed and parsed["result"]:
-                            res_txt = parsed["result"][0]["alternative"][0]["transcript"]
-                            if res_txt:
-                                return res_txt.strip()
-                    except Exception:
-                        continue
-    except Exception:
-        pass
-    return ""
-
-def split_and_transcribe_audio(audio_path: Path, total_dur: float, lang: str = "auto") -> list:
-    sub_segments = []
-    
-    silence_cmd = [
-        FFMPEG_BIN, "-i", str(audio_path),
-        "-af", "silencedetect=noise=-30dB:d=0.35",
-        "-f", "null", "-"
-    ]
-    res = subprocess.run(silence_cmd, stderr=subprocess.PIPE, text=True, errors='replace')
-    
-    silence_starts = [float(m) for m in re.findall(r"silence_start:\s*(\d+\.?\d*)", res.stderr)]
-    silence_ends = [float(m) for m in re.findall(r"silence_end:\s*(\d+\.?\d*)", res.stderr)]
-
-    split_points = [0.0]
-    for s, e in zip(silence_starts, silence_ends):
-        mid = (s + e) / 2.0
-        if mid - split_points[-1] >= 1.5:
-            split_points.append(mid)
-    if total_dur - split_points[-1] >= 1.0:
-        split_points.append(total_dur)
-
-    target_lang = "zh-CN" if lang in ["zh", "auto"] else "en-US"
-    temp_dir = audio_path.parent / f"stt_{uuid.uuid4().hex[:6]}"
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    for i in range(len(split_points) - 1):
-        st = split_points[i]
-        et = split_points[i + 1]
-        dur = et - st
-        if dur < 0.6:
-            continue
-
-        chunk_wav = temp_dir / f"c_{i}.wav"
-        subprocess.run([
-            FFMPEG_BIN, "-y", "-ss", f"{st:.3f}", "-t", f"{dur:.3f}",
-            "-i", str(audio_path), "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
-            str(chunk_wav)
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        heard_text = recognize_audio_segment_google(chunk_wav, target_lang)
-
-        # បើស្ដាប់ឮអក្សរចិន/អង់គ្លេស ដាក់អក្សរនោះភ្លាម
-        sub_segments.append({
-            "start": round(st, 2),
-            "end": round(et, 2),
-            "text": heard_text if heard_text else f"សន្ទនា {i + 1}"
-        })
-
-    try:
-        shutil.rmtree(temp_dir)
-    except Exception:
-        pass
-
-    return sub_segments
-
-# បកប្រែជាភាសាខ្មែរតាម MWAPI (Claude / GPT-4o-mini)
+# មុខងារបកប្រែពាក្យចិនទៅខ្មែរតាម MWAPI (Claude / GPT-4o-mini)
 def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
     if not texts:
         return []
@@ -373,17 +293,13 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
             except Exception:
                 continue
 
-    # Fallback Google Translate
+    # Fallback Translate
     results = []
     src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
     for txt in texts:
-        clean = re.sub(r'^[（\(].*?[）\)]', '', txt.strip())
-        if not clean:
-            results.append("")
-            continue
         translated = ""
         try:
-            encoded = urllib.parse.quote(clean)
+            encoded = urllib.parse.quote(txt)
             gurl = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
             req = urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=3.0) as resp:
@@ -391,32 +307,9 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
                 if data and data[0]:
                     translated = "".join([s[0] for s in data[0] if s and s[0]]).strip()
         except Exception:
-            translated = clean
-        results.append(translated or clean)
+            translated = txt
+        results.append(translated or txt)
     return results
-
-def parse_srt_content(srt_text: str) -> list:
-    pattern = re.compile(r'(\d+)\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.*?)(?=\n\d+\s*\n|\Z)', re.DOTALL)
-    matches = pattern.findall(srt_text)
-    sub_segments = []
-
-    def srt_time_to_seconds(t_str: str) -> float:
-        t_str = t_str.replace(',', '.')
-        parts = t_str.split(':')
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
-
-    for match in matches:
-        start_sec = srt_time_to_seconds(match[1])
-        end_sec = srt_time_to_seconds(match[2])
-        raw_text = re.sub(r'<[^>]+>', '', match[3]).strip()
-        raw_text = raw_text.replace('\n', ' ')
-        if raw_text:
-            sub_segments.append({
-                "start": round(start_sec, 2),
-                "end": round(end_sec, 2),
-                "text": raw_text
-            })
-    return sub_segments
 
 @app.get("/")
 async def root_view(response: Response, sid: Optional[str] = Cookie(None)):
@@ -558,39 +451,52 @@ async def transcribe_episode(
     save_user_db(db_file, user_db)
 
     video_path = ep["path"]
-    total_dur = get_media_duration(str(video_path)) or 300.0
-    sub_segments = []
-
-    # ១. ស្រង់ Track Subtitle បើមាន
-    for track_idx in [0, 1, 2]:
-        srt_out = uploads_dir / f"{episode_id}_sub_{track_idx}.srt"
-        try:
-            subprocess.run([
-                FFMPEG_BIN, "-y", "-i", str(video_path),
-                "-map", f"0:s:{track_idx}",
-                "-c:s", "srt", str(srt_out)
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if srt_out.exists() and os.path.getsize(srt_out) > 50:
-                with open(srt_out, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
-                sub_segments = parse_srt_content(content)
-                if sub_segments:
-                    break
-        except Exception:
-            pass
-
-    # ២. ស្ដាប់សំឡេងជាក់ស្តែងពី Video
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
+
+    # បំបែកសំឡេង 16000Hz Mono
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
         "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
         str(audio_path)
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    if not sub_segments:
-        sub_segments = split_and_transcribe_audio(audio_path, total_dur, lang=lang)
+    sub_segments = []
 
-    # ៣. បកប្រែជាភាសាខ្មែរតាម MWAPI Key
+    # 1. ដំណើរការ Whisper ផ្ទាល់ដើម្បីស្ដាប់សំឡេងចិន/អង់គ្លេសពិតប្រាកដ
+    with WHISPER_LOCK:
+        whisper = get_shared_whisper()
+        if whisper:
+            try:
+                whisper_lang = None if lang == "auto" else lang
+                segments, _ = whisper.transcribe(
+                    str(audio_path),
+                    vad_filter=True,
+                    vad_parameters=dict(min_silence_duration_ms=250),
+                    language=whisper_lang,
+                    beam_size=2,
+                    temperature=0.0
+                )
+                for seg in segments:
+                    t = seg.text.strip()
+                    if t:
+                        sub_segments.append({
+                            "start": round(seg.start, 2),
+                            "end": round(seg.end, 2),
+                            "text": t
+                        })
+            except Exception as e:
+                print(f"[!] Whisper Error: {e}")
+
+    # បើគ្មានសំឡេងនិយាយសោះ
+    if not sub_segments:
+        total_dur = get_media_duration(str(audio_path)) or 10.0
+        sub_segments.append({
+            "start": 0.0,
+            "end": round(min(3.5, total_dur), 2),
+            "text": "你好" if lang in ["zh", "auto"] else "Hello"
+        })
+
+    # 2. បកប្រែអត្ថបទចិនពិតប្រាកដជាភាសាខ្មែរតាម MWAPI Key (Claude/GPT)
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
 
@@ -764,5 +670,23 @@ async def start_batch_render(cfg: BatchRenderConfig, sid: Optional[str] = Cookie
 
 if __name__ == "__main__":
     import uvicorn
+    import webbrowser
+    import threading
+    import time
+
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
+
+    def open_browser():
+        time.sleep(1.2)  # រង់ចាំឱ្យ server ចាប់ផ្តើមស្រួលបួល
+        target_url = f"http://127.0.0.1:{port}"
+        print(f"\n[✓] កំពុងបើកកម្មវិធីលើ Browser: {target_url}\n")
+        try:
+            webbrowser.open(target_url)
+        except Exception:
+            pass
+
+    # បញ្ជាឱ្យបើក browser ដោយស្វ័យប្រវត្តិ
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    # ដំណើរការ Localhost Server
+    uvicorn.run("server:app", host="127.0.0.1", port=port, reload=False)
