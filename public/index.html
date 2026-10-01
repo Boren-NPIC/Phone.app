@@ -224,17 +224,19 @@
 
                     <select id="selModelSize" onchange="toggleCloudKeyInput()"
                         class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
-                        <option value="tiny" selected>⚡ Tiny Model (ស្រាល លឿនបំផុត - ណែនាំលើ Cloud)</option>
+                        <option value="cloud_groq" selected>⚡ Groq Cloud (លឿនបំផុត - ឥតគិតថ្លៃ)</option>
                         <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
-                        <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
+                        <option value="tiny">⚡ Tiny Model (ស្រាលលើ Cloud)</option>
                     </select>
 
-                    <div id="boxCloudKey" class="hidden space-y-1 pt-1.5 border-t border-rose-500/30">
+                    <div id="boxCloudKey" class="space-y-1 pt-1.5 border-t border-rose-500/30">
                         <div class="flex items-center justify-between">
-                            <span id="lblKeyName" class="text-[9px] text-rose-300 font-semibold">API Key:</span>
-                            <span class="text-[8px] text-slate-400">រក្សាទុកក្នុងម៉ាស៊ីន</span>
+                            <span id="lblKeyName" class="text-[9px] text-rose-300 font-semibold">Groq API Key
+                                (gsk_...):</span>
+                            <a href="https://console.groq.com/keys" target="_blank"
+                                class="text-[8px] text-cyan-400 underline">យក Key ឥតគិតថ្លៃ</a>
                         </div>
-                        <input type="password" id="txtCloudKey" placeholder="sk-..." oninput="saveCloudKey(this.value)"
+                        <input type="password" id="txtCloudKey" placeholder="gsk_..." oninput="saveCloudKey(this.value)"
                             class="w-full bg-studio-base border border-rose-400 rounded px-2 py-1 text-white text-[10px] outline-none font-mono">
                     </div>
                 </div>
@@ -413,11 +415,15 @@
             const modelVal = document.getElementById("selModelSize").value;
             const box = document.getElementById("boxCloudKey");
             const keyInput = document.getElementById("txtCloudKey");
+            const lbl = document.getElementById("lblKeyName");
+
             if (modelVal === "cloud_openai") {
                 box.classList.remove("hidden");
+                lbl.innerText = "OpenAI API Key (sk-...):";
                 keyInput.value = localStorage.getItem("openai_key") || "";
             } else if (modelVal === "cloud_groq") {
                 box.classList.remove("hidden");
+                lbl.innerText = "Groq API Key (gsk_...):";
                 keyInput.value = localStorage.getItem("groq_key") || "";
             } else {
                 box.classList.add("hidden");
@@ -572,7 +578,7 @@
             const fd = new FormData();
             fd.append("episode_id", ep.id);
             fd.append("session_id", currentSessionId);
-            fd.append("model_size", document.getElementById("selModelSize").value || "tiny");
+            fd.append("model_size", document.getElementById("selModelSize").value || "cloud_groq");
             fd.append("cloud_key", document.getElementById("txtCloudKey").value || "");
             fd.append("lang", document.getElementById("selSourceLang").value || "auto");
             fd.append("speaker_mode", document.getElementById("selSpeakerMode").value || "auto");
