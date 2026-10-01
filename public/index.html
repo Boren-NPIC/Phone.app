@@ -456,6 +456,12 @@
                 const data = await res.json();
                 episodeList = Object.values(data);
                 renderEpisodeSidebar();
+
+                // ធ្វើសមកាលកម្មទិន្នន័យឃ្លាដែល Transcribe រួចមកបង្ហាញលើអេក្រង់ភ្លាម
+                if (activeIndex >= 0 && episodeList[activeIndex]) {
+                    renderDialogues(episodeList[activeIndex].dialogues || []);
+                    renderTimelineTracks(episodeList[activeIndex].dialogues || []);
+                }
                 checkSync();
             } catch (e) { }
         }
@@ -485,7 +491,7 @@
             </span>
             <div class="flex items-center gap-1">
               ${dlBtn}
-              <span class="text-[9px] ${isDone ? 'text-emerald-400 font-bold' : 'text-cyan-300'} font-mono">${ep.status}</span>
+              <span class="text-[9px] ${ep.status === 'transcribed' ? 'text-emerald-400 font-bold' : 'text-cyan-300'} font-mono">${ep.status}</span>
               <button onclick="event.stopPropagation(); deleteSingleEpisode('${ep.id}', ${idx})" title="លុបភាគនេះ" class="text-slate-500 hover:text-rose-400 p-0.5 rounded transition">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
               </button>
@@ -547,7 +553,7 @@
 
             if (previewSrc) {
                 p.src = previewSrc;
-                p.load(); // ដោះស្រាយបញ្ហា loading វិល
+                p.load();
                 p.classList.remove("hidden");
                 emptyNotice.classList.add("hidden");
             }
@@ -579,6 +585,7 @@
             ep.dialogues = data.dialogues || [];
             ep.status = "transcribed";
 
+            // បង្ហាញអក្សរភាសាខ្មែរភ្លាមៗនៅលើអេក្រង់
             if (idx === activeIndex) {
                 renderDialogues(ep.dialogues);
                 renderTimelineTracks(ep.dialogues);
