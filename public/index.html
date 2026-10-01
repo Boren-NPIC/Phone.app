@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KhmerDub Studio Pro - Multi-User Cloud</title>
+    <title>KhmerDub Studio Pro - Precision Multi-User Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,145 +26,289 @@
             }
         }
     </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #080c14;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .clip-selected {
+            outline: 2px solid #ffffff !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+        }
+    </style>
 </head>
 
-<body class="bg-studio-base text-slate-200 font-sans min-h-screen flex flex-col overflow-x-hidden select-none">
+<body
+    class="bg-studio-base text-slate-200 font-sans min-h-screen lg:h-screen flex flex-col overflow-y-auto lg:overflow-hidden select-none">
 
     <!-- TOP APP BAR -->
     <header
         class="py-2.5 px-3 sm:px-4 border-b border-studio-border bg-studio-panel flex flex-wrap items-center justify-between gap-2 flex-shrink-0 z-30">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 sm:gap-3">
             <div
-                class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow">
-                <i data-lucide="zap" class="w-4 h-4 fill-white"></i>
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-rose-500/20">
+                <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5 fill-white"></i>
             </div>
             <div>
-                <span class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">KhmerDub Pro</span>
-                <span
-                    class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold ml-1">MULTI-USER</span>
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">KhmerDub Studio
+                        Pro</span>
+                    <span
+                        class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">MULTI-LANG
+                        PRO</span>
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">បកប្រែចិន & អង់គ្លេស •
+                    ត្រូវមាត់តួអង្គ ១០០% • Multi-User Cloud</p>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex items-center gap-2">
+        <!-- Audio Monitor Status -->
+        <div
+            class="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-studio-card border border-studio-border text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-300 text-[11px]">Audio Monitor: <strong class="text-emerald-400">Direct Dub
+                    Active</strong></span>
+        </div>
+
+        <!-- Top Action Buttons -->
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <label
-                class="cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white font-medium transition shadow active:scale-95">
-                <input type="file" id="batchUploadInput" multiple accept="video/*" class="hidden"
-                    onchange="onFilesChosen(event)">
+                class="cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/40 text-xs text-white font-medium transition shadow active:scale-95">
+                <input type="file" id="batchUploadInput" multiple accept="video/mp4,video/mkv,video/quicktime,video/*"
+                    class="hidden" onchange="onFilesChosen(event)">
                 <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
                 <span>+ ថែមរឿងភាគ</span>
             </label>
 
             <button id="btnTranscribe" onclick="runTranscribeSingle()" disabled
-                class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 text-xs text-white font-semibold transition shadow active:scale-95 disabled:opacity-40">
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow active:scale-95">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span id="txtTranscribe">Transcribe ភាគនេះ</span>
+                <span id="txtTranscribe">Turbo Transcribe ភាគនេះ</span>
+            </button>
+
+            <button id="btnTranscribeAll" onclick="runTranscribeAllEpisodes()" disabled
+                class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-xs text-emerald-200 font-medium transition shadow active:scale-95">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span id="txtTranscribeAll">Turbo គ្រប់ភាគ</span>
             </button>
 
             <button id="btnExport" onclick="runExportBatch()" disabled
-                class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-xs text-white font-semibold transition shadow active:scale-95 disabled:opacity-40">
+                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-white font-semibold transition shadow active:scale-95">
                 <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
-                <span>Export ទាំងអស់</span>
+                <span id="txtExport">Turbo Export ទាំងអស់</span>
             </button>
         </div>
     </header>
 
-    <!-- WORKSPACE -->
-    <div class="flex-1 flex flex-col lg:flex-row">
+    <!-- MAIN WORKSPACE -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
-        <!-- LEFT: EPISODES -->
+        <!-- 1. LEFT PANEL: EPISODES -->
         <aside
-            class="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-studio-border bg-studio-panel flex flex-col flex-shrink-0">
+            class="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-studio-border bg-studio-panel flex flex-col flex-shrink-0 max-h-56 lg:max-h-full">
             <div class="p-2.5 border-b border-studio-border flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-300 text-[11px] flex items-center gap-1.5">
-                    <i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i> ជួររឿងភាគរបស់អ្នក
+                <span class="font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
+                    <i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i> ជួររឿងភាគ (Episodes)
                 </span>
-                <button onclick="clearAllProjectEpisodes()"
-                    class="px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-600 border border-rose-500/50 text-rose-300 hover:text-white text-[10px] flex items-center gap-1">
-                    <i data-lucide="trash-2" class="w-3 h-3"></i> <span>សម្អាត</span>
-                </button>
+                <div class="flex items-center gap-1.5">
+                    <span id="lblCount" class="text-[10px] bg-studio-card px-2 py-0.5 rounded text-cyan-300 font-mono">0
+                        ភាគ</span>
+                    <button onclick="clearAllProjectEpisodes()" title="សម្អាតវីដេអូចាស់ទាំងអស់"
+                        class="px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-600 border border-rose-500/50 text-rose-300 hover:text-white text-[10px] flex items-center gap-1 transition active:scale-95">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        <span>សម្អាត</span>
+                    </button>
+                </div>
             </div>
 
-            <div id="epList" class="p-2 space-y-1.5 max-h-48 lg:max-h-none overflow-y-auto">
-                <div class="text-center p-3 text-slate-500 text-xs">សូមចុច "+ ថែមរឿងភាគ"</div>
+            <div class="p-2 bg-studio-card/30 border-b border-studio-border space-y-1 text-xs">
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 text-[11px]">
+                    <input type="checkbox" id="chkMerge" class="w-3.5 h-3.5 accent-cyan-500 rounded">
+                    <span>ច្របាច់បញ្ចូលគ្នា (Merge) ទៅជា 1 រឿង</span>
+                </label>
+            </div>
+
+            <div id="epList" class="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-[90px]">
+                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-3">
+                    <i data-lucide="upload-cloud" class="w-6 h-6 mb-1 text-slate-600"></i>
+                    <span>សូមចុច "+ ថែមរឿងភាគ" ដើម្បីចាប់ផ្ដើម</span>
+                </div>
             </div>
         </aside>
 
-        <!-- CENTER: SCRIPT -->
-        <main class="w-full flex-1 flex flex-col bg-studio-base border-b lg:border-b-0 min-h-[320px]">
+        <!-- 2. CENTER PANEL: DIALOGUE SCRIPT -->
+        <main
+            class="w-full flex-1 flex flex-col bg-studio-base border-b lg:border-b-0 overflow-hidden min-h-[360px] lg:min-h-0">
             <div
                 class="h-9 border-b border-studio-border bg-studio-panel/60 px-3 flex items-center justify-between text-xs">
                 <span id="currentEpisodeHeader"
-                    class="font-bold text-cyan-400 truncate max-w-[240px]">អត្ថបទសន្ទនា</span>
-                <span id="currentDialogueCount" class="text-[10px] text-slate-400">0 ឃ្លា</span>
+                    class="font-bold text-cyan-400 flex items-center gap-1.5 text-xs truncate max-w-[240px]">
+                    <i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> អត្ថបទសន្ទនា (Direct Dialogues)
+                </span>
+                <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                    <span id="currentDialogueCount">0 ឃ្លា</span>
+                    <span class="hidden sm:inline text-studio-border">|</span>
+                    <span class="hidden sm:inline">Engine: <strong class="text-rose-400">AI Cloud Sync</strong></span>
+                </div>
             </div>
 
-            <div id="dialogueContainer"
-                class="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2 max-h-[400px] lg:max-h-none">
-                <div class="h-full flex flex-col items-center justify-center p-6 text-center text-slate-500 text-xs">
-                    ជ្រើសរើសភាគ រួចចុច "Transcribe ភាគនេះ"
+            <div id="dialogueContainer" class="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
+                <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-6">
+                    <i data-lucide="captions" class="w-8 h-8 mb-2 stroke-[1.5]"></i>
+                    <span>ជ្រើសរើសភាគមួយ រួចចុច "Turbo Transcribe" ដើម្បីដំណើរការ</span>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT: CONTROLS & RENDER -->
+        <!-- 3. RIGHT PANEL: VIDEO MONITOR & SETTINGS (រក្សាទុក Options ទាំងអស់) -->
         <aside
-            class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-studio-border bg-studio-panel flex flex-col p-3 space-y-3">
+            class="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-studio-border bg-studio-panel flex flex-col overflow-y-auto flex-shrink-0 p-3 space-y-3">
 
-            <!-- Video Monitor -->
-            <div
-                class="w-full aspect-[9/16] max-h-56 bg-black rounded-xl overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto shadow-inner">
-                <video id="player" playsinline controls class="w-full h-full object-contain hidden"></video>
-                <div id="emptyPlayerNotice" class="text-center p-4">
-                    <i data-lucide="film" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
-                    <span class="text-[11px] text-slate-500">ផ្ទាំងបញ្ចាំងវីដេអូ</span>
-                </div>
-            </div>
-
-            <!-- Settings -->
-            <div class="space-y-2 text-xs">
-                <div class="p-2 rounded-xl bg-studio-card border border-studio-border space-y-1">
-                    <span class="text-cyan-300 text-[10px] block font-bold">ភាសាដើមក្នុងវីដេអូ</span>
-                    <select id="selSourceLang"
-                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-white text-[11px] outline-none">
-                        <option value="auto" selected>🌐 Auto Detect</option>
-                        <option value="zh">🇨🇳 ភាសាចិន (Chinese)</option>
-                        <option value="en">🇺🇸 ភាសាអង់គ្លេស (English)</option>
-                    </select>
+            <!-- Video Monitor Box -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">VIDEO MONITOR</span>
+                    <div
+                        class="flex items-center gap-1 bg-studio-card p-0.5 rounded border border-studio-border text-[9px]">
+                        <button id="btnRatio916" onclick="changeAspect('9:16')"
+                            class="px-2 py-0.5 rounded bg-cyan-600/40 text-cyan-300 font-bold">9:16</button>
+                        <button id="btnRatio169" onclick="changeAspect('16:9')"
+                            class="px-2 py-0.5 rounded text-slate-400">16:9</button>
+                    </div>
                 </div>
 
-                <div
-                    class="p-2.5 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-1.5">
-                    <span class="text-rose-300 text-[10px] block font-bold">AI Translation Model</span>
-                    <select id="selModelSize" onchange="toggleCloudKeyInput()"
-                        class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1 text-white text-[11px] outline-none">
-                        <option value="tiny" selected>⚡ Tiny Model (ស្រាល - សម្រាប់ Cloud)</option>
-                        <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
-                        <option value="cloud_groq">⚡ Groq Cloud (Ultra Fast)</option>
-                    </select>
-                    <div id="boxCloudKey" class="hidden pt-1">
-                        <input type="password" id="txtCloudKey" placeholder="API Key..."
-                            oninput="saveCloudKey(this.value)"
-                            class="w-full bg-studio-base border border-rose-400 rounded px-2 py-1 text-white text-[10px] outline-none font-mono">
+                <div id="videoMonitorWrapper"
+                    class="w-full aspect-[9/16] max-h-56 bg-black rounded-xl overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto shadow-inner">
+                    <video id="player" playsinline controls class="w-full h-full object-contain hidden"
+                        ontimeupdate="onVideoTimeUpdate()" onloadedmetadata="onVideoLoaded()"></video>
+                    <div id="emptyPlayerNotice" class="text-center p-4">
+                        <i data-lucide="film" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
+                        <span class="text-[11px] text-slate-500 font-medium">ផ្ទាំងបញ្ចាំងវីដេអូ</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Settings Controls ទាំងអស់ -->
+            <div class="grid grid-cols-1 gap-2">
+                <div class="p-2 rounded-xl bg-studio-card border border-studio-border space-y-1 text-xs">
+                    <span class="font-bold text-cyan-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="languages" class="w-3 h-3 text-cyan-400"></i> ភាសាដើមក្នុងវីដេអូ (Source
+                        Language)
+                    </span>
+                    <select id="selSourceLang"
+                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1.5 text-white text-[11px] outline-none">
+                        <option value="auto" selected>🌐 Auto Detect (ស្គាល់ដោយស្វ័យប្រវត្តិ)</option>
+                        <option value="zh">🇨🇳 ភាសាចិន (Chinese Drama / Movie)</option>
+                        <option value="en">🇺🇸 ភាសាអង់គ្លេស (English Movie / Clip)</option>
+                    </select>
+                </div>
+
+                <div
+                    class="p-2.5 rounded-xl bg-gradient-to-r from-rose-950/40 to-studio-card border border-rose-500/50 space-y-2 text-xs">
+                    <span class="font-bold text-rose-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="zap" class="w-3 h-3 text-rose-400"></i> AI Transcribe & Translation Engine
+                    </span>
+
+                    <select id="selModelSize" onchange="toggleCloudKeyInput()"
+                        class="w-full bg-studio-base border border-rose-500/60 rounded px-2 py-1.5 text-white text-[11px] outline-none">
+                        <option value="tiny" selected>⚡ Tiny Model (ស្រាល លឿនបំផុត - ណែនាំលើ Cloud)</option>
+                        <option value="cloud_openai">☁️ OpenAI Cloud (GPT-4o-mini)</option>
+                        <option value="cloud_groq">⚡ Groq Cloud (LPU Ultra Fast)</option>
+                    </select>
+
+                    <div id="boxCloudKey" class="hidden space-y-1 pt-1.5 border-t border-rose-500/30">
+                        <div class="flex items-center justify-between">
+                            <span id="lblKeyName" class="text-[9px] text-rose-300 font-semibold">API Key:</span>
+                            <span class="text-[8px] text-slate-400">រក្សាទុកក្នុងម៉ាស៊ីន</span>
+                        </div>
+                        <input type="password" id="txtCloudKey" placeholder="sk-..." oninput="saveCloudKey(this.value)"
+                            class="w-full bg-studio-base border border-rose-400 rounded px-2 py-1 text-white text-[10px] outline-none font-mono">
+                    </div>
+                </div>
+
+                <div
+                    class="p-2 rounded-xl bg-gradient-to-r from-amber-950/40 to-studio-card border border-amber-500/50 space-y-1 text-xs">
+                    <span class="font-bold text-amber-300 text-[10px] flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> កម្រិតច្បាស់វីដេអូ (Resolution)
+                    </span>
+                    <select id="selResolution"
+                        class="w-full bg-studio-base border border-amber-500/60 rounded px-2 py-1 text-white text-[11px] outline-none">
+                        <option value="1080p" selected>💎 Full HD 1080p (ច្បាស់កម្រិតខ្ពស់)</option>
+                        <option value="4k">👑 Ultra HD 4K (ច្បាស់កំពូល)</option>
+                        <option value="original">⚡ Original</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-cyan-300 text-[10px]">ល្បឿនសំឡេង (Voice Speed)</span>
+                    <span id="lblSpeedVal" class="text-emerald-400 font-mono font-bold text-[10px]">1.00x</span>
+                </div>
+                <input type="range" id="rngSpeed" min="0.5" max="2.5" step="0.05" value="1.0"
+                    oninput="updateSpeedVal(this.value)" class="w-full accent-cyan-500 h-1 cursor-pointer">
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-1.5 text-xs">
+                <span class="font-bold text-cyan-300 text-[10px] block">សំឡេងតួអង្គទូទៅ (Speaker Mode)</span>
+                <select id="selSpeakerMode"
+                    class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-slate-200 text-[11px] outline-none">
+                    <option value="auto">Auto (AI ឆ្លាស់តួប្រុស/ស្រី)</option>
+                    <option value="male">តួប្រុសសុទ្ធ (ពិសិដ្ឋ)</option>
+                    <option value="female">តួស្រីសុទ្ធ (ស្រីមុំ)</option>
+                </select>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-studio-card border border-studio-border space-y-2 text-xs">
+                <div class="flex justify-between text-[10px] text-slate-400">
+                    <span>កម្រិតសំឡេងខ្មែរ (Khmer Dub):</span>
+                    <span id="dubDisplay" class="text-emerald-400 font-mono">220%</span>
+                </div>
+                <input type="range" id="rngDub" min="0" max="3.0" step="0.05" value="2.20"
+                    oninput="updateDubVal(this.value)" class="w-full accent-emerald-500 h-1">
+
+                <div class="pt-1.5 border-t border-studio-border/50">
+                    <label class="block text-[10px] text-slate-400 mb-0.5">ពណ៌ Subtitle</label>
+                    <select id="selColor"
+                        class="w-full bg-studio-base border border-studio-border rounded px-2 py-1 text-slate-200 text-[10px]">
+                        <option value="&H00FFFF">ពណ៌លឿង (Yellow)</option>
+                        <option value="&HFFFFFF">ពណ៌ស (White)</option>
+                        <option value="&H00FF00">ពណ៌បៃតងខ្ចី (Cyan)</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Render Progress Container -->
-            <div id="renderBox" class="p-3 rounded-xl bg-indigo-950/60 border border-indigo-500/50 space-y-2 text-xs">
-                <div class="flex justify-between items-center text-[10px]">
-                    <span id="renderStatus" class="text-cyan-300">រង់ចាំ Render...</span>
-                    <span id="renderPercent" class="text-cyan-400 font-mono font-bold">0%</span>
+            <div id="renderBox"
+                class="p-3 rounded-xl bg-indigo-950/60 border border-indigo-500/50 space-y-2 text-xs shadow-lg">
+                <div class="flex justify-between items-center">
+                    <span id="renderStatus" class="text-cyan-300 font-semibold text-[10px]">រង់ចាំ Render...</span>
+                    <span id="renderPercent" class="text-cyan-400 font-mono font-bold text-[10px]">0%</span>
                 </div>
                 <div class="w-full bg-studio-base h-2 rounded-full overflow-hidden border border-indigo-900">
                     <div id="renderProgressBar"
-                        class="bg-gradient-to-r from-rose-500 to-indigo-500 h-full transition-all duration-300"
+                        class="bg-gradient-to-r from-rose-500 via-cyan-500 to-indigo-500 h-full transition-all duration-300"
                         style="width: 0%"></div>
                 </div>
+
                 <div id="renderDownloadArea" class="pt-1 hidden">
                     <a id="btnDirectDownload" href="#" download
-                        class="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-bold flex items-center justify-center gap-2 text-xs">
-                        <i data-lucide="download" class="w-4 h-4"></i>
+                        class="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs">
+                        <i data-lucide="download" class="w-4 h-4 text-white"></i>
                         <span id="btnDownloadText">ទាញយកវីដេអូ</span>
                     </a>
                 </div>
@@ -172,11 +316,100 @@
         </aside>
     </div>
 
+    <!-- 4. BOTTOM PANEL: TIMELINE TRACKS (រក្សាទុកជម្រើសដើម) -->
+    <footer class="border-t border-studio-border bg-studio-panel flex flex-col flex-shrink-0 z-20">
+        <div
+            class="h-9 border-b border-studio-border px-3 flex flex-wrap items-center justify-between gap-1.5 bg-studio-card/80 text-xs">
+            <div class="flex items-center gap-1.5">
+                <button id="btnPlayPause" onclick="togglePlayPause()"
+                    class="w-6 h-6 rounded bg-cyan-600 hover:bg-cyan-500 flex items-center justify-center text-white transition shadow active:scale-95">
+                    <i id="playIcon" data-lucide="play" class="w-3 h-3 fill-white"></i>
+                </button>
+                <span id="timeDisplay"
+                    class="font-mono text-cyan-400 text-[10px] sm:text-xs font-semibold mr-1">00:00.00 / 00:00.00</span>
+
+                <button onclick="splitCurrentDialogue()"
+                    class="flex items-center gap-1 px-2.5 py-0.5 rounded bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 text-rose-200 text-[9px] font-semibold transition active:scale-95">
+                    <i data-lucide="scissors" class="w-2.5 h-2.5"></i> <span>កាត់ (Split)</span>
+                </button>
+
+                <button id="btnDeleteSelected" onclick="deleteSelectedClip()" disabled
+                    class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-900 border border-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-rose-300 text-[9px] transition">
+                    លុប
+                </button>
+            </div>
+
+            <div class="hidden sm:flex items-center gap-3 text-[9px] text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-blue-500"></span> Video</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-emerald-500"></span> Dub</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-amber-500"></span> Sub</span>
+            </div>
+        </div>
+
+        <div class="h-32 lg:h-36 flex overflow-hidden">
+            <div
+                class="w-20 sm:w-28 border-r border-studio-border bg-studio-panel/80 flex flex-col justify-around py-1 px-2 text-[8px] sm:text-[9px] font-mono text-slate-400 flex-shrink-0">
+                <div class="flex items-center justify-between"><span
+                        class="text-blue-400 font-semibold truncate">VIDEO</span><i data-lucide="video"
+                        class="w-3 h-3 text-blue-400"></i></div>
+                <div class="flex items-center justify-between"><span
+                        class="text-emerald-400 font-semibold truncate">DUB</span><i data-lucide="mic"
+                        class="w-3 h-3 text-emerald-400"></i></div>
+                <div class="flex items-center justify-between"><span
+                        class="text-amber-400 font-semibold truncate">SUB</span><i data-lucide="subtitles"
+                        class="w-3 h-3 text-amber-400"></i></div>
+            </div>
+
+            <div id="timelineContainer" onclick="seekTimeline(event)"
+                class="flex-1 relative bg-studio-base overflow-x-hidden flex flex-col justify-around py-1 px-2 cursor-pointer">
+                <div id="playhead"
+                    class="absolute top-0 bottom-0 w-[2px] bg-white z-20 pointer-events-none transition-all duration-75"
+                    style="left: 0%;">
+                    <div class="w-2.5 h-2.5 bg-white rotate-45 -ml-1 -mt-0.5 rounded-xs shadow"></div>
+                </div>
+
+                <div
+                    class="h-6 w-full bg-blue-950/30 rounded border border-blue-500/30 relative overflow-hidden flex items-center px-2">
+                    <div
+                        class="w-full h-3.5 bg-blue-600/40 rounded flex items-center justify-between px-2 text-[8px] text-blue-300 font-mono">
+                        <span>Video Track</span>
+                        <span id="tlVideoName" class="truncate max-w-[120px]">--</span>
+                    </div>
+                </div>
+
+                <div id="dubTrackRow"
+                    class="h-6 w-full bg-emerald-950/30 rounded border border-emerald-500/30 relative overflow-hidden flex items-center">
+                    <span class="text-[8px] text-emerald-500/60 font-mono px-2">រង់ចាំ Transcribe...</span>
+                </div>
+
+                <div id="subTrackRow"
+                    class="h-6 w-full bg-amber-950/30 rounded border border-amber-500/30 relative overflow-hidden flex items-center">
+                    <span class="text-[8px] text-amber-500/60 font-mono px-2">គ្មាន Subtitles...</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
+        // គ្រប់គ្រង Session ID សម្រាប់អ្នកប្រើប្រាស់ម្នាក់ៗ
+        function getSessionId() {
+            let sid = localStorage.getItem("khmerdub_sid");
+            if (!sid) {
+                sid = "usr_" + Math.random().toString(36).substring(2, 10);
+                localStorage.setItem("khmerdub_sid", sid);
+            }
+            return sid;
+        }
+        const currentSessionId = getSessionId();
+
         let episodeList = [];
         let activeIndex = -1;
-        let localFileMap = {};
         let syncInterval = null;
+        let selectedClipIndex = null;
+        let currentAudioPreview = null;
+
+        function updateSpeedVal(val) { document.getElementById("lblSpeedVal").innerText = `${parseFloat(val).toFixed(2)}x`; }
+        function updateDubVal(val) { document.getElementById("dubDisplay").innerText = `${Math.round(val * 100)}%`; }
 
         function toggleCloudKeyInput() {
             const modelVal = document.getElementById("selModelSize").value;
@@ -204,24 +437,24 @@
             if (!files.length) return;
 
             const fd = new FormData();
+            fd.append("session_id", currentSessionId);
             files.forEach(f => fd.append("files", f));
 
-            const res = await fetch("/api/batch-upload", { method: "POST", body: fd });
-            const data = await res.json();
-            files.forEach((f, idx) => {
-                if (data.uploaded && data.uploaded[idx]) {
-                    localFileMap[data.uploaded[idx].id] = URL.createObjectURL(f);
-                }
-            });
-
-            await fetchEpisodes();
-            if (episodeList.length > 0) pickEpisode(0);
-            document.getElementById("btnExport").disabled = false;
+            try {
+                const res = await fetch("/api/batch-upload", { method: "POST", body: fd });
+                if (!res.ok) throw new Error("Upload Failed");
+                await fetchEpisodes();
+                if (episodeList.length > 0) pickEpisode(0);
+                document.getElementById("btnExport").disabled = false;
+                document.getElementById("btnTranscribeAll").disabled = false;
+            } catch (err) {
+                alert("Upload បរាជ័យ: " + err.message);
+            }
         }
 
         async function fetchEpisodes() {
             try {
-                const res = await fetch("/api/episodes");
+                const res = await fetch(`/api/episodes?session_id=${currentSessionId}`);
                 const data = await res.json();
                 episodeList = Object.values(data);
                 renderEpisodeSidebar();
@@ -231,6 +464,8 @@
 
         function renderEpisodeSidebar() {
             const box = document.getElementById("epList");
+            document.getElementById("lblCount").innerText = `${episodeList.length} ភាគ`;
+
             if (!episodeList.length) {
                 box.innerHTML = `<div class="text-center p-3 text-slate-500 text-xs">គ្មានវីដេអូ</div>`;
                 return;
@@ -239,23 +474,27 @@
             box.innerHTML = "";
             episodeList.forEach((ep, idx) => {
                 const item = document.createElement("div");
-                item.className = `p-2 rounded-lg border transition text-xs relative ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80 ring-1 ring-cyan-500' : 'bg-studio-card border-studio-border'}`;
-                const isDone = ep.status === "completed";
-                const dlBtn = isDone ? `<a href="${ep.output_url}" download class="p-1 rounded bg-emerald-600 text-white"><i data-lucide="download" class="w-3 h-3"></i></a>` : '';
+                item.className = `p-2 rounded-lg border transition text-xs relative group ${activeIndex === idx ? 'bg-cyan-950/60 border-cyan-500/80 ring-1 ring-cyan-500' : 'bg-studio-card border-studio-border'}`;
+
+                const isDone = (ep.status === "completed" || ep.progress === 100) && ep.output_url;
+                const dlBtn = isDone ? `<a href="${ep.output_url}" download onclick="event.stopPropagation()" class="p-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition"><i data-lucide="download" class="w-3.5 h-3.5"></i></a>` : '';
 
                 item.innerHTML = `
           <div class="flex items-center justify-between mb-1">
-            <span onclick="pickEpisode(${idx})" class="font-bold text-white truncate max-w-[130px] flex items-center gap-1 cursor-pointer">
-              <span class="px-1 bg-studio-base text-cyan-400 font-mono text-[9px]">${ep.code}</span>
+            <span onclick="pickEpisode(${idx})" class="font-bold text-white truncate max-w-[105px] flex items-center gap-1 text-[11px] cursor-pointer">
+              <span class="px-1 py-0.2 rounded bg-studio-base text-cyan-400 font-mono text-[9px]">${ep.code}</span>
               ${ep.filename}
             </span>
             <div class="flex items-center gap-1">
               ${dlBtn}
-              <span class="text-[9px] text-cyan-300 font-mono">${ep.status}</span>
+              <span class="text-[9px] ${isDone ? 'text-emerald-400 font-bold' : 'text-cyan-300'} font-mono">${ep.status}</span>
+              <button onclick="event.stopPropagation(); deleteSingleEpisode('${ep.id}', ${idx})" title="លុបភាគនេះ" class="text-slate-500 hover:text-rose-400 p-0.5 rounded transition">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
           </div>
           <div onclick="pickEpisode(${idx})" class="w-full bg-studio-base h-1 rounded-full overflow-hidden cursor-pointer">
-            <div class="${isDone ? 'bg-emerald-400' : 'bg-cyan-500'} h-full" style="width: ${ep.progress || 0}%"></div>
+            <div class="${isDone ? 'bg-emerald-400' : 'bg-cyan-500'} h-full transition-all duration-300" style="width: ${ep.progress || 0}%"></div>
           </div>
         `;
                 box.appendChild(item);
@@ -263,29 +502,60 @@
             if (window.lucide) lucide.createIcons();
         }
 
+        async function clearAllProjectEpisodes() {
+            if (!confirm("តើអ្នកចង់សម្អាតវីដេអូចាស់ទាំងអស់ចោលមែនទេ?")) return;
+            const fd = new FormData();
+            fd.append("session_id", currentSessionId);
+            await fetch("/api/clear-all-episodes", { method: "POST", body: fd });
+            episodeList = [];
+            activeIndex = -1;
+            const p = document.getElementById("player");
+            p.src = "";
+            p.classList.add("hidden");
+            document.getElementById("emptyPlayerNotice").classList.remove("hidden");
+            document.getElementById("btnTranscribe").disabled = true;
+            document.getElementById("btnTranscribeAll").disabled = true;
+            document.getElementById("btnExport").disabled = true;
+            renderEpisodeSidebar();
+            renderDialogues([]);
+            renderTimelineTracks([]);
+        }
+
+        async function deleteSingleEpisode(epId, idx) {
+            if (!confirm("លុបភាគនេះ?")) return;
+            await fetch(`/api/episodes/${epId}?session_id=${currentSessionId}`, { method: "DELETE" });
+            await fetchEpisodes();
+            if (activeIndex === idx) {
+                activeIndex = episodeList.length > 0 ? 0 : -1;
+                if (activeIndex >= 0) pickEpisode(activeIndex);
+            }
+        }
+
         function pickEpisode(idx) {
             if (!episodeList[idx]) return;
             activeIndex = idx;
+            selectedClipIndex = null;
+            document.getElementById("btnDeleteSelected").disabled = true;
             renderEpisodeSidebar();
 
             const ep = episodeList[idx];
-            document.getElementById("currentEpisodeHeader").innerText = `${ep.code} - ${ep.filename}`;
+            document.getElementById("currentEpisodeHeader").innerHTML = `<i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> ${ep.code} - ${ep.filename}`;
+            document.getElementById("tlVideoName").innerText = ep.filename;
             document.getElementById("btnTranscribe").disabled = false;
 
             const p = document.getElementById("player");
             const emptyNotice = document.getElementById("emptyPlayerNotice");
-            const previewSrc = localFileMap[ep.id] || (ep.output_url ? ep.output_url : null);
+            const previewSrc = ep.output_url || ep.video_url;
 
             if (previewSrc) {
                 p.src = previewSrc;
                 p.classList.remove("hidden");
                 emptyNotice.classList.add("hidden");
-            } else {
-                p.classList.add("hidden");
-                emptyNotice.classList.remove("hidden");
             }
 
             renderDialogues(ep.dialogues || []);
+            renderTimelineTracks(ep.dialogues || []);
+            if (window.lucide) lucide.createIcons();
         }
 
         async function executeTranscribe(idx) {
@@ -294,18 +564,26 @@
 
             const fd = new FormData();
             fd.append("episode_id", ep.id);
+            fd.append("session_id", currentSessionId);
             fd.append("model_size", document.getElementById("selModelSize").value || "tiny");
             fd.append("cloud_key", document.getElementById("txtCloudKey").value || "");
             fd.append("lang", document.getElementById("selSourceLang").value || "auto");
-            fd.append("speaker_mode", "auto");
+            fd.append("speaker_mode", document.getElementById("selSpeakerMode").value || "auto");
 
             const res = await fetch("/api/transcribe-episode", { method: "POST", body: fd });
-            if (!res.ok) throw new Error(`Server Error (${res.status})`);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `Server Error ${res.status}`);
+            }
+
             const data = await res.json();
             ep.dialogues = data.dialogues || [];
             ep.status = "transcribed";
 
-            if (idx === activeIndex) renderDialogues(ep.dialogues);
+            if (idx === activeIndex) {
+                renderDialogues(ep.dialogues);
+                renderTimelineTracks(ep.dialogues);
+            }
             renderEpisodeSidebar();
         }
 
@@ -313,17 +591,39 @@
             if (activeIndex < 0) return;
             const btn = document.getElementById("btnTranscribe");
             const txt = document.getElementById("txtTranscribe");
+
             btn.disabled = true;
             txt.innerText = "⚡ កំពុង Transcribe...";
+
             try {
                 await executeTranscribe(activeIndex);
-                txt.innerText = "Transcribe ភាគនេះ";
-            } catch (e) {
-                alert("បរាជ័យ: " + e.message);
+                txt.innerText = "Turbo Transcribe ភាគនេះ";
+            } catch (err) {
+                alert("Transcribe បរាជ័យ: " + err.message);
                 txt.innerText = "សាកម្ដងទៀត";
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        async function runTranscribeAllEpisodes() {
+            const btn = document.getElementById("btnTranscribeAll");
+            const txt = document.getElementById("txtTranscribeAll");
+            btn.disabled = true;
+
+            for (let i = 0; i < episodeList.length; i++) {
+                pickEpisode(i);
+                txt.innerText = `កំពុង Turbo ${episodeList[i].code}...`;
+                try {
+                    await executeTranscribe(i);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            txt.innerText = "Turbo ចប់គ្រប់ភាគ ✓";
+            btn.disabled = false;
+            if (episodeList.length > 0) pickEpisode(0);
         }
 
         function renderDialogues(dialogues) {
@@ -331,57 +631,259 @@
             document.getElementById("currentDialogueCount").innerText = `${(dialogues || []).length} ឃ្លា`;
 
             if (!dialogues || !dialogues.length) {
-                box.innerHTML = `<div class="p-6 text-center text-amber-400 text-xs">មិនទាន់ Transcribe ទេ! ចុច "Transcribe ភាគនេះ"</div>`;
+                box.innerHTML = `<div class="h-full flex flex-col items-center justify-center p-6 text-center text-amber-400 text-xs">
+          មិនទាន់បាន Transcribe ភាគនេះទេ! សូមចុចប៊ូតុង "Turbo Transcribe ភាគនេះ" ខាងលើ។
+        </div>`;
                 return;
             }
 
             box.innerHTML = "";
             dialogues.forEach((d, i) => {
                 const row = document.createElement("div");
-                row.className = "p-2 rounded-xl border bg-studio-card border-studio-border text-xs space-y-1";
+                row.id = `dlgRow_${i}`;
+                row.className = `p-2.5 rounded-xl border text-xs space-y-1.5 transition ${selectedClipIndex === i ? 'bg-indigo-950/70 border-white shadow-lg' : 'bg-studio-card border-studio-border'}`;
                 row.innerHTML = `
-          <div class="flex justify-between font-mono text-[10px] text-cyan-400"><span>${d.start}s - ${d.end}s</span><span>${d.speaker}</span></div>
-          <div class="bg-studio-base p-1.5 rounded text-slate-400 text-[11px]">${d.original_text}</div>
-          <textarea oninput="episodeList[${activeIndex}].dialogues[${i}].khmer_text = this.value" class="w-full bg-studio-base border border-studio-border rounded p-1.5 text-white text-[11px] outline-none" rows="2">${d.khmer_text}</textarea>
+          <div class="flex items-center justify-between pb-1 border-b border-studio-border/40">
+            <button onclick="seekToDialogue(${d.start}, ${i})" class="font-mono text-cyan-400 hover:underline bg-studio-base px-2 py-0.5 rounded text-[10px] flex items-center gap-1">
+              <i data-lucide="play-circle" class="w-3 h-3 text-cyan-400"></i> ${d.start}s - ${d.end}s
+            </button>
+            <div class="flex items-center gap-1.5">
+              <select onchange="episodeList[${activeIndex}].dialogues[${i}].speaker = this.value" class="bg-studio-base border border-studio-border rounded px-1.5 py-0.5 text-[10px] text-cyan-300">
+                <option value="piseth" ${d.speaker === 'piseth' ? 'selected' : ''}>តួប្រុស (ពិសិដ្ឋ)</option>
+                <option value="sreymom" ${d.speaker === 'sreymom' ? 'selected' : ''}>តួស្រី (ស្រីមុំ)</option>
+              </select>
+              <button onclick="previewAudioLine('${d.khmer_text.replace(/'/g, "\\'")}', '${d.speaker}')" class="px-2 py-0.5 rounded bg-cyan-600 text-white hover:bg-cyan-500 text-[10px] flex items-center gap-1 shadow active:scale-95">
+                <i data-lucide="volume-2" class="w-3 h-3"></i> ស្ដាប់
+              </button>
+              <button onclick="deleteDialogueLine(${i})" class="p-1 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition">
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+            <div class="bg-studio-base p-2 rounded text-slate-400 text-[11px] select-text">${d.original_text}</div>
+            <textarea oninput="episodeList[${activeIndex}].dialogues[${i}].khmer_text = this.value" class="w-full bg-studio-base border border-studio-border rounded p-2 text-white text-[11px] outline-none resize-none rows-2 leading-relaxed">${d.khmer_text}</textarea>
+          </div>
         `;
                 box.appendChild(row);
             });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderTimelineTracks(dialogues) {
+            const dubTrack = document.getElementById("dubTrackRow");
+            const subTrack = document.getElementById("subTrackRow");
+            const p = document.getElementById("player");
+            const totalDuration = p.duration || 60;
+
+            if (!dialogues || !dialogues.length) {
+                dubTrack.innerHTML = `<span class="text-[8px] text-emerald-500/60 font-mono px-2">រង់ចាំ Transcribe...</span>`;
+                subTrack.innerHTML = `<span class="text-[8px] text-amber-500/60 font-mono px-2">គ្មាន Subtitles...</span>`;
+                return;
+            }
+
+            dubTrack.innerHTML = "";
+            subTrack.innerHTML = "";
+
+            dialogues.forEach((d, idx) => {
+                const leftPercent = (d.start / totalDuration) * 100;
+                const widthPercent = Math.max(((d.end - d.start) / totalDuration) * 100, 2.5);
+
+                const dBlock = document.createElement("div");
+                const isSel = selectedClipIndex === idx;
+                dBlock.className = `absolute h-5 bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400 rounded text-[8px] text-white px-1 truncate flex items-center justify-between cursor-pointer transition ${isSel ? 'clip-selected' : ''}`;
+                dBlock.style.left = `${leftPercent}%`;
+                dBlock.style.width = `${widthPercent}%`;
+                dBlock.innerHTML = `<span>${d.speaker === 'piseth' ? 'ពិសិដ្ឋ' : 'ស្រីមុំ'}</span>`;
+                dBlock.onclick = (e) => {
+                    e.stopPropagation();
+                    selectTimelineClip(idx);
+                    seekToDialogue(d.start, idx);
+                };
+                dubTrack.appendChild(dBlock);
+
+                const sBlock = document.createElement("div");
+                sBlock.className = `absolute h-4 bg-amber-600/80 border border-amber-400 rounded text-[7px] text-white px-1 truncate flex items-center cursor-pointer ${isSel ? 'clip-selected' : ''}`;
+                sBlock.style.left = `${leftPercent}%`;
+                sBlock.style.width = `${widthPercent}%`;
+                sBlock.innerText = d.khmer_text;
+                sBlock.onclick = (e) => {
+                    e.stopPropagation();
+                    selectTimelineClip(idx);
+                    seekToDialogue(d.start, idx);
+                };
+                subTrack.appendChild(sBlock);
+            });
+        }
+
+        function selectTimelineClip(idx) {
+            selectedClipIndex = idx;
+            document.getElementById("btnDeleteSelected").disabled = false;
+            renderTimelineTracks(episodeList[activeIndex].dialogues || []);
+            const targetRow = document.getElementById(`dlgRow_${idx}`);
+            if (targetRow) targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function splitCurrentDialogue() {
+            const p = document.getElementById("player");
+            const currentTime = p.currentTime;
+            if (!episodeList[activeIndex]) return;
+
+            const dialogues = episodeList[activeIndex].dialogues || [];
+            const matchIdx = dialogues.findIndex(d => currentTime > (d.start + 0.15) && currentTime < (d.end - 0.15));
+
+            if (matchIdx === -1) {
+                alert("សូមរំកិល Playhead ឱ្យចំកណ្ដាលឃ្លាណាមួយដើម្បីកាត់!");
+                return;
+            }
+
+            const orig = dialogues[matchIdx];
+            const splitTime = parseFloat(currentTime.toFixed(2));
+
+            const part1 = { ...orig, end: splitTime };
+            const part2 = {
+                id: Math.max(...dialogues.map(d => d.id), 0) + 1,
+                start: splitTime,
+                end: orig.end,
+                original_text: orig.original_text,
+                khmer_text: orig.khmer_text,
+                speaker: orig.speaker
+            };
+
+            dialogues.splice(matchIdx, 1, part1, part2);
+            selectedClipIndex = matchIdx + 1;
+            document.getElementById("btnDeleteSelected").disabled = false;
+            renderDialogues(dialogues);
+            renderTimelineTracks(dialogues);
+        }
+
+        function deleteSelectedClip() {
+            if (selectedClipIndex === null || !episodeList[activeIndex]) return;
+            deleteDialogueLine(selectedClipIndex);
+            selectedClipIndex = null;
+            document.getElementById("btnDeleteSelected").disabled = true;
+        }
+
+        function deleteDialogueLine(idx) {
+            if (!episodeList[activeIndex]) return;
+            episodeList[activeIndex].dialogues.splice(idx, 1);
+            renderDialogues(episodeList[activeIndex].dialogues);
+            renderTimelineTracks(episodeList[activeIndex].dialogues);
+        }
+
+        function togglePlayPause() {
+            const p = document.getElementById("player");
+            const icon = document.getElementById("playIcon");
+            if (p.paused) {
+                p.play();
+                icon.setAttribute("data-lucide", "pause");
+            } else {
+                p.pause();
+                icon.setAttribute("data-lucide", "play");
+            }
+            lucide.createIcons();
+        }
+
+        function onVideoTimeUpdate() {
+            const p = document.getElementById("player");
+            const playhead = document.getElementById("playhead");
+            const timeDisplay = document.getElementById("timeDisplay");
+
+            if (p.duration) {
+                const percent = (p.currentTime / p.duration) * 100;
+                playhead.style.left = `${percent}%`;
+                timeDisplay.innerText = `${formatTime(p.currentTime)} / ${formatTime(p.duration)}`;
+            }
+        }
+
+        function onVideoLoaded() {
+            const p = document.getElementById("player");
+            document.getElementById("timeDisplay").innerText = `00:00.00 / ${formatTime(p.duration)}`;
+            if (episodeList[activeIndex]) {
+                renderTimelineTracks(episodeList[activeIndex].dialogues || []);
+            }
+        }
+
+        function seekTimeline(e) {
+            const p = document.getElementById("player");
+            if (!p.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            p.currentTime = (clickX / rect.width) * p.duration;
+        }
+
+        function seekToDialogue(sec, idx) {
+            const p = document.getElementById("player");
+            p.currentTime = sec;
+            if (idx !== undefined) selectTimelineClip(idx);
+        }
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            const ms = Math.floor((secs % 1) * 100);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+        }
+
+        async function previewAudioLine(text, speaker) {
+            if (!text) return;
+            const fd = new FormData();
+            fd.append("text", text);
+            fd.append("speaker", speaker || "piseth");
+            fd.append("session_id", currentSessionId);
+            try {
+                const res = await fetch("/api/preview-tts", { method: "POST", body: fd });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    if (currentAudioPreview) currentAudioPreview.pause();
+                    currentAudioPreview = new Audio(URL.createObjectURL(blob));
+                    currentAudioPreview.play();
+                }
+            } catch (e) { }
         }
 
         async function runExportBatch() {
             if (!episodeList.length) return;
+
             const dMap = {};
             episodeList.forEach(ep => { dMap[ep.id] = ep.dialogues || []; });
 
+            document.getElementById("renderBox").classList.remove("hidden");
+            document.getElementById("renderStatus").innerText = `⚡ កំពុង Turbo Render...`;
             document.getElementById("btnExport").disabled = true;
-            document.getElementById("renderStatus").innerText = "⚡ កំពុង Render តាមជួរ...";
 
             const payload = {
+                session_id: currentSessionId,
                 episode_ids: episodeList.map(e => e.id),
-                merge_all_into_one: false,
-                speaker_mode: "auto",
-                speed_factor: 1.0,
-                dub_volume: 2.20,
+                merge_all_into_one: document.getElementById("chkMerge").checked,
+                speaker_mode: document.getElementById("selSpeakerMode").value,
+                speed_factor: parseFloat(document.getElementById("rngSpeed").value),
+                dub_volume: parseFloat(document.getElementById("rngDub").value),
                 burn_subtitles: true,
-                sub_color: "&H00FFFF",
+                sub_color: document.getElementById("selColor").value,
                 aspect_ratio: "9:16",
-                resolution: "1080p",
+                resolution: document.getElementById("selResolution").value,
                 dialogues_map: dMap
             };
 
-            await fetch("/api/batch-render", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            try {
+                await fetch("/api/batch-render", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
 
-            if (syncInterval) clearInterval(syncInterval);
-            syncInterval = setInterval(checkSync, 1000);
+                if (syncInterval) clearInterval(syncInterval);
+                syncInterval = setInterval(checkSync, 1000);
+            } catch (err) {
+                alert("Render Error: " + err.message);
+                document.getElementById("btnExport").disabled = false;
+            }
         }
 
         async function checkSync() {
             try {
-                const res = await fetch("/api/episodes");
+                const res = await fetch(`/api/episodes?session_id=${currentSessionId}`);
                 const data = await res.json();
                 const serverEpisodes = Object.values(data);
                 if (!serverEpisodes.length) return;
@@ -406,7 +908,7 @@
                     const dlBtn = document.getElementById("btnDirectDownload");
                     dlArea.classList.remove("hidden");
                     dlBtn.href = lastOutputUrl;
-                    document.getElementById("btnDownloadText").innerText = `ទាញយកវីដេអូ (${completedCount}/${serverEpisodes.length} ភាគ)`;
+                    document.getElementById("btnDownloadText").innerText = `ទាញយកវីដេអូ (${completedCount}/${serverEpisodes.length} ភាគរួចរាល់)`;
                 }
 
                 renderEpisodeSidebar();
@@ -422,13 +924,20 @@
             }
         }
 
-        async function clearAllProjectEpisodes() {
-            if (!confirm("សម្អាតវីដេអូទាំងអស់របស់អ្នក?")) return;
-            await fetch("/api/clear-all-episodes", { method: "POST" });
-            episodeList = [];
-            activeIndex = -1;
-            localFileMap = {};
-            fetchEpisodes();
+        function changeAspect(ratio) {
+            const box = document.getElementById("videoMonitorWrapper");
+            const b916 = document.getElementById("btnRatio916");
+            const b169 = document.getElementById("btnRatio169");
+
+            if (ratio === '9:16') {
+                box.className = "w-full aspect-[9/16] max-h-56 bg-black rounded-xl overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto shadow-inner";
+                b916.className = "px-2 py-0.5 rounded bg-cyan-600/40 text-cyan-300 font-bold";
+                b169.className = "px-2 py-0.5 rounded text-slate-400";
+            } else {
+                box.className = "w-full aspect-video max-h-56 bg-black rounded-xl overflow-hidden border border-studio-border relative flex items-center justify-center mx-auto shadow-inner";
+                b916.className = "px-2 py-0.5 rounded bg-cyan-600/40 text-cyan-300 font-bold";
+                b169.className = "px-2 py-0.5 rounded text-slate-400";
+            }
         }
 
         window.addEventListener("DOMContentLoaded", () => {
