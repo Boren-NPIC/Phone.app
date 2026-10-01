@@ -43,7 +43,7 @@ try:
 except Exception:
     edge_tts = None
 
-app = FastAPI(title="KhmerDub Studio Pro - Precision Engine", version="1500.0.0")
+app = FastAPI(title="KhmerDub Studio Pro - Final Stable Engine", version="1600.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -232,60 +232,50 @@ def analyze_smart_speaker(orig_text: str, khmer_text: str, last_speaker: str) ->
 
     return "sreymom" if last_speaker == "piseth" else "piseth"
 
-# មុខងារស្ដាប់សំឡេងតាម Google Speech Recognizer ដោយផ្ទាល់ (ស្គាល់ភាសាចិន ១០០% ឥតគិតថ្លៃ)
-def recognize_speech_google_free(chunk_wav_path: Path, lang_code: str = "zh-CN") -> str:
+# មុខងារបំប្លែងសំឡេងចិន/អង់គ្លេសទៅជាអក្សរដោយផ្ទាល់តាម Speech API
+def recognize_audio_segment_google(wav_chunk: Path, lang_code: str = "zh-CN") -> str:
     try:
-        # បំប្លែង chunk ទៅជា FLAC 16000Hz Mono
-        chunk_flac = chunk_wav_path.with_suffix(".flac")
+        flac_path = wav_chunk.with_suffix(".flac")
         subprocess.run([
-            FFMPEG_BIN, "-y", "-i", str(chunk_wav_path),
+            FFMPEG_BIN, "-y", "-i", str(wav_chunk),
             "-ar", "16000", "-ac", "1",
-            str(chunk_flac)
+            str(flac_path)
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        if not chunk_flac.exists():
+        if not flac_path.exists():
             return ""
 
-        with open(chunk_flac, "rb") as f:
-            audio_data = f.read()
+        with open(flac_path, "rb") as f:
+            flac_data = f.read()
 
-        try:
-            chunk_flac.unlink(missing_ok=True)
-        except Exception:
-            pass
+        flac_path.unlink(missing_ok=True)
 
-        url = f"https://www.google.com/speech-api/v2/recognize?output=json&lang={lang_code}&key=AIzaSyA_placeholder_auto"
-        # ប្រើ Web Speech endpoint
-        url = f"https://translate.google.com/translate_a/t?client=at&sc=1&v=2.0&sl={lang_code}&tl=km"
-        
-        # ប្រើ Google Voice Recognition API
-        req_url = f"https://www.google.com/speech-api/v2/recognize?client=chromium&lang={lang_code}&maxresults=1"
+        url = f"https://www.google.com/speech-api/v2/recognize?client=chromium&lang={lang_code}&maxresults=1"
         req = urllib.request.Request(
-            req_url,
-            data=audio_data,
+            url,
+            data=flac_data,
             headers={
                 "Content-Type": "audio/x-flac; rate=16000",
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
             }
         )
-        with urllib.request.urlopen(req, timeout=5.0) as resp:
-            content = resp.read().decode('utf-8', errors='ignore')
-            for line in content.splitlines():
-                line = line.strip()
-                if line:
+        with urllib.request.urlopen(req, timeout=4.5) as resp:
+            body = resp.read().decode('utf-8', errors='ignore')
+            for part in body.splitlines():
+                if part.strip():
                     try:
-                        js = json.loads(line)
-                        if "result" in js and js["result"]:
-                            trans = js["result"][0]["alternative"][0]["transcript"]
-                            if trans:
-                                return trans.strip()
+                        parsed = json.loads(part)
+                        if "result" in parsed and parsed["result"]:
+                            res_txt = parsed["result"][0]["alternative"][0]["transcript"]
+                            if res_txt:
+                                return res_txt.strip()
                     except Exception:
                         continue
     except Exception:
         pass
     return ""
 
-def transcribe_audio_chunks_real(audio_path: Path, total_dur: float, lang: str = "zh") -> list:
+def split_and_transcribe_audio(audio_path: Path, total_dur: float, lang: str = "auto") -> list:
     sub_segments = []
     
     silence_cmd = [
@@ -307,7 +297,7 @@ def transcribe_audio_chunks_real(audio_path: Path, total_dur: float, lang: str =
         split_points.append(total_dur)
 
     target_lang = "zh-CN" if lang in ["zh", "auto"] else "en-US"
-    temp_dir = audio_path.parent / f"tmp_{uuid.uuid4().hex[:6]}"
+    temp_dir = audio_path.parent / f"stt_{uuid.uuid4().hex[:6]}"
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     for i in range(len(split_points) - 1):
@@ -317,19 +307,20 @@ def transcribe_audio_chunks_real(audio_path: Path, total_dur: float, lang: str =
         if dur < 0.6:
             continue
 
-        chunk_wav = temp_dir / f"chunk_{i}.wav"
+        chunk_wav = temp_dir / f"c_{i}.wav"
         subprocess.run([
             FFMPEG_BIN, "-y", "-ss", f"{st:.3f}", "-t", f"{dur:.3f}",
             "-i", str(audio_path), "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
             str(chunk_wav)
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        recognized_text = recognize_speech_google_free(chunk_wav, target_lang)
+        heard_text = recognize_audio_segment_google(chunk_wav, target_lang)
 
+        # បើស្ដាប់ឮអក្សរចិន/អង់គ្លេស ដាក់អក្សរនោះភ្លាម
         sub_segments.append({
             "start": round(st, 2),
             "end": round(et, 2),
-            "text": recognized_text if recognized_text else f" dialogue scene {i + 1}"
+            "text": heard_text if heard_text else f"សន្ទនា {i + 1}"
         })
 
     try:
@@ -339,14 +330,10 @@ def transcribe_audio_chunks_real(audio_path: Path, total_dur: float, lang: str =
 
     return sub_segments
 
-# បកប្រែជាភាសាខ្មែរតាម MWAPI (GPT-4o-mini / Claude)
+# បកប្រែជាភាសាខ្មែរតាម MWAPI (Claude / GPT-4o-mini)
 def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: str = "https://api.mwapi.dev", source_lang: str = "auto") -> List[str]:
     if not texts:
         return []
-
-    clean_inputs = []
-    for t in texts:
-        clean_inputs.append(t.replace("dialogue scene", "ឈុត").strip())
 
     lang_desc = "Chinese or English" if source_lang in ["auto", ""] else ("Chinese" if source_lang == "zh" else "English")
     system_prompt = (
@@ -359,13 +346,13 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
     )
 
     if cloud_key:
-        for model_choice in ["claude-3-haiku-20240307", "gpt-4o-mini"]:
+        for model_choice in ["claude-3-haiku-20240307", "gpt-4o-mini", "claude-3-5-sonnet-20240620"]:
             try:
                 req_data = {
                     "model": model_choice,
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": json.dumps(clean_inputs, ensure_ascii=False)}
+                        {"role": "user", "content": json.dumps(texts, ensure_ascii=False)}
                     ],
                     "temperature": 0.2
                 }
@@ -375,7 +362,7 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
                     data=json.dumps(req_data).encode("utf-8"),
                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {cloud_key.strip()}"}
                 )
-                with urllib.request.urlopen(req, timeout=12) as resp:
+                with urllib.request.urlopen(req, timeout=15) as resp:
                     res_json = json.loads(resp.read().decode("utf-8"))
                     content_str = res_json["choices"][0]["message"]["content"].strip()
                     match = re.search(r'\[.*\]', content_str, re.DOTALL)
@@ -386,13 +373,17 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
             except Exception:
                 continue
 
-    # Fallback Translate
+    # Fallback Google Translate
     results = []
     src_code = "auto" if source_lang == "auto" else ("zh-CN" if source_lang == "zh" else "en")
-    for txt in clean_inputs:
+    for txt in texts:
+        clean = re.sub(r'^[（\(].*?[）\)]', '', txt.strip())
+        if not clean:
+            results.append("")
+            continue
         translated = ""
         try:
-            encoded = urllib.parse.quote(txt)
+            encoded = urllib.parse.quote(clean)
             gurl = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=km&dt=t&q={encoded}"
             req = urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=3.0) as resp:
@@ -400,8 +391,8 @@ def translate_batch_with_mwapi(texts: List[str], cloud_key: str, endpoint_base: 
                 if data and data[0]:
                     translated = "".join([s[0] for s in data[0] if s and s[0]]).strip()
         except Exception:
-            translated = txt
-        results.append(translated or txt)
+            translated = clean
+        results.append(translated or clean)
     return results
 
 def parse_srt_content(srt_text: str) -> list:
@@ -570,7 +561,7 @@ async def transcribe_episode(
     total_dur = get_media_duration(str(video_path)) or 300.0
     sub_segments = []
 
-    # ១. ស្រង់ Subtitle Stream
+    # ១. ស្រង់ Track Subtitle បើមាន
     for track_idx in [0, 1, 2]:
         srt_out = uploads_dir / f"{episode_id}_sub_{track_idx}.srt"
         try:
@@ -588,7 +579,7 @@ async def transcribe_episode(
         except Exception:
             pass
 
-    # ២. ស្ដាប់សំឡេងតាម Free Web STT
+    # ២. ស្ដាប់សំឡេងជាក់ស្តែងពី Video
     audio_path = uploads_dir / f"{episode_id}_audio.wav"
     subprocess.run([
         FFMPEG_BIN, "-y", "-i", str(video_path),
@@ -597,9 +588,9 @@ async def transcribe_episode(
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     if not sub_segments:
-        sub_segments = transcribe_audio_chunks_real(audio_path, total_dur, lang=lang)
+        sub_segments = split_and_transcribe_audio(audio_path, total_dur, lang=lang)
 
-    # ៣. បកប្រែជាភាសាខ្មែរតាម MWAPI Key របស់បង
+    # ៣. បកប្រែជាភាសាខ្មែរតាម MWAPI Key
     orig_texts = [s["text"] for s in sub_segments]
     khmer_translations = translate_batch_with_mwapi(orig_texts, cloud_key=cloud_key, endpoint_base=api_endpoint, source_lang=lang)
 
