@@ -14,6 +14,10 @@ from pathlib import Path
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor
 
+# បន្ថែម ២ បន្ទាត់នេះត្រង់នេះ៖
+import static_ffmpeg
+static_ffmpeg.add_paths()
+
 # --- កម្ចាត់ WinError 10054 និង ProactorBasePipeTransport Crash លើ Windows ---
 if sys.platform == "win32":
     try:
@@ -98,8 +102,7 @@ STATIC_DIR = BASE_DIR / "public"
 WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
+app.mount("/workspace", StaticFiles(directory=str(WORKSPACE_ROOT)), name="workspace")
 RENDER_LOCK = threading.Lock()
 WHISPER_LOCK = threading.Lock()
 GLOBAL_WHISPER_INSTANCE = None

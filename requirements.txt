@@ -5,3 +5,4 @@ faster-whisper
 edge-tts
 pydantic
 imageio-ffmpeg
+static-ffmpeg
