@@ -1,8 +1,5 @@
 fastapi
 uvicorn
 python-multipart
-faster-whisper
-edge-tts
-pydantic
-imageio-ffmpeg
+requests
 static-ffmpeg
