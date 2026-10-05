@@ -170,7 +170,7 @@
             <button id="btnExportAll" onclick="triggerStartExport()"
                 class="flex items-center gap-1.5 px-3 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-lg text-xs font-semibold shadow-lg shadow-cyan-600/20 transition-all shrink-0 cursor-pointer">
                 <i class="fa-solid fa-play"></i>
-                <span id="btnExportAllText">Turbo Export ទាំងអស់</span>
+                <span id="btnExportAllText">Turbo Export ទាំងអស់ (Auto 4K)</span>
             </button>
         </div>
     </header>
@@ -325,14 +325,14 @@
                     </span>
                     <div class="flex gap-1 text-[10px]">
                         <button id="btnAspect916" onclick="setAspectRatio('9:16')"
-                            class="px-1.5 py-0.5 rounded bg-[#101b2d] text-slate-300">9:16</button>
+                            class="px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30">9:16</button>
                         <button id="btnAspect169" onclick="setAspectRatio('16:9')"
-                            class="px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30">16:9</button>
+                            class="px-1.5 py-0.5 rounded bg-[#101b2d] text-slate-300">16:9</button>
                     </div>
                 </div>
 
                 <div id="monitorContainer"
-                    class="aspect-video max-h-56 mx-auto bg-black rounded-xl overflow-hidden border border-[#162740] flex items-center justify-center relative shadow-lg">
+                    class="aspect-[9/16] max-h-60 mx-auto bg-black rounded-xl overflow-hidden border border-[#162740] flex items-center justify-center relative shadow-lg">
                     <video id="studioVideoPlayer" class="w-full h-full object-contain pointer-events-auto" controls
                         preload="auto"></video>
 
@@ -367,13 +367,13 @@
                     <label class="block text-slate-300 mb-1 flex items-center justify-between font-semibold">
                         <span class="flex items-center gap-1.5"><i class="fa-solid fa-tv text-amber-400"></i>
                             កម្រិតច្បាស់វីដេអូ (Video Resolution)</span>
-                        <span class="text-[10px] text-amber-400 font-mono">Ultra Quality</span>
+                        <span class="text-[10px] text-amber-400 font-mono">Auto 4K Enabled</span>
                     </label>
                     <select id="videoResolutionSelect"
                         class="w-full px-2.5 py-2 rounded-lg studio-select text-xs cursor-pointer font-medium border border-amber-500/30 focus:border-amber-400">
-                        <option value="original">💎 Original (ទម្រង់ដើម - គុណភាពខ្ពស់បំផុត High Bitrate)</option>
-                        <option value="1080p">🎬 1080p FHD (ច្បាស់កម្រិតខ្ពស់ - High Definition 1920x1080)</option>
-                        <option value="4k">🌟 4K UHD (ច្បាស់ឥតខ្ចោះ - Ultra HD 3840x2160)</option>
+                        <option value="4k" selected>🌟 4K UHD (ច្បាស់កម្រិតកំពូល 3840x2160 / 2160x3840 Auto)</option>
+                        <option value="1080p">🎬 1080p FHD (ច្បាស់កម្រិតខ្ពស់ 1920x1080)</option>
+                        <option value="original">💎 Original (ទម្រង់ដើមវីដេអូ)</option>
                     </select>
                 </div>
 
@@ -443,19 +443,16 @@
                         class="w-full accent-cyan-500 cursor-pointer" />
                 </div>
 
-                <!-- TOGGLE SWITCH FOR BGM / SFX / AMBIENCE -->
                 <div class="p-3 rounded-xl bg-[#08111f] border border-[#14233a] flex items-center justify-between">
                     <div>
                         <div class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                             <i class="fa-solid fa-music text-cyan-400"></i> រក្សាភ្លេង BGM, SFX & Ambience
                         </div>
-                        <div class="text-[9px] text-slate-400">បើកដើម្បីរក្សាភ្លេងកំដរ និងសំឡេង Effects (បិទ=យកតែសំឡេង
-                            Dub សុទ្ធ)</div>
+                        <div class="text-[9px] text-slate-400">បើកដើម្បីរក្សាភ្លេងកំដរ និងសំឡេង Effects</div>
                     </div>
                     <input type="checkbox" id="keepBgmToggle" checked class="w-4 h-4 accent-cyan-500 cursor-pointer" />
                 </div>
 
-                <!-- PROGRESS & DOWNLOAD BUTTON -->
                 <div id="renderProgressContainer" class="p-3 bg-[#08111f] rounded-xl border border-[#14233a] space-y-2">
                     <div class="flex items-center justify-between text-[11px]">
                         <span id="renderStatusText" class="text-slate-400">ត្រៀមរួចរាល់</span>
@@ -485,10 +482,10 @@
                             </div>
                             <div>
                                 <div class="text-xs font-bold text-emerald-300">Anti-Copyright Protection</div>
-                                <div class="text-[9px] text-slate-400">កម្ចាត់ Copyright 100% លើ Facebook / TikTok</div>
+                                <div class="text-[9px] text-slate-400">កម្ចាត់ Copyright លើ Facebook / TikTok</div>
                             </div>
                         </div>
-                        <input type="checkbox" id="antiCopyrightToggle" checked
+                        <input type="checkbox" id="antiCopyrightToggle"
                             class="w-4 h-4 accent-emerald-500 cursor-pointer" />
                     </div>
                 </div>
@@ -496,7 +493,7 @@
                 <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-font text-rose-400"></i> អក្សរលើវីដេអូ (ស្ទីល & ស៊ុម - ចងចាំទីតាំង)
+                            <i class="fa-solid fa-font text-rose-400"></i> អក្សរលើវីដេអូ (ស្ទីល & ស៊ុម)
                         </span>
                         <button onclick="addNewTextBox()"
                             class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow">
@@ -509,8 +506,7 @@
                 <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-droplet text-cyan-400"></i> បឺឡឺ (Blur) បិទបាំងច្រើនកន្លែង
-                            (ចងចាំទីតាំង)
+                            <i class="fa-solid fa-droplet text-cyan-400"></i> បឺឡឺ (Blur) បិទបាំង Subtitle (អូសដៃដាក់)
                         </span>
                         <button onclick="addNewBlurBox()"
                             class="px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow">
@@ -523,7 +519,7 @@
                 <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-image text-amber-400"></i> Upload Logo [អូស & ពង្រីកពង្រួម]
+                            <i class="fa-solid fa-image text-amber-400"></i> Upload Logo [អូស & ពង្រីក]
                         </span>
                         <input type="checkbox" id="enableLogoCheckbox"
                             class="w-4 h-4 accent-amber-500 cursor-pointer" />
@@ -820,7 +816,6 @@
         let pollInterval = null;
         let uploadedLogoFileName = "";
 
-        // State Variables - ចងចាំទីតាំង Sticky ក្នុង LocalStorage
         let savedTexts = localStorage.getItem('khmerdub_saved_text_items');
         let textItemsData = savedTexts ? JSON.parse(savedTexts) : [];
 
@@ -844,9 +839,11 @@
         let splitPollingInterval = null;
         let studioPollingInterval = null;
 
-        async function checkSubscriptionFromServer(serviceKey) {
+        async function checkSubscriptionFromServer(serviceKey, requestId = null) {
             try {
-                const res = await fetch(`/api/check-subscription-status?service_key=${serviceKey}`);
+                let url = `/api/check-subscription-status?service_key=${serviceKey}`;
+                if (requestId) url += `&request_id=${requestId}`;
+                const res = await fetch(url);
                 return await res.json();
             } catch (e) {
                 return { active: false };
@@ -926,7 +923,6 @@
         window.checkAndOpenSplitTool = async () => {
             const sub = await checkSubscriptionFromServer('splitter');
             if (!sub.active) {
-                // Reset Form & Button State មុនពេលបើក Modal
                 const btn = document.getElementById('btnSubmitSplitReceipt');
                 if (btn) {
                     btn.disabled = false;
@@ -966,19 +962,28 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> កំពុងផ្ញើវិក្កយបត្រ...`;
 
             try {
-                await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                const res = await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                const resData = await res.json();
+                const reqId = resData.request_id;
+
                 document.getElementById('splitWaitNotice').classList.remove('hidden');
-                btn.innerHTML = `✅ បានផ្ញើវិក្កយបត្ររួចរាល់`;
+                btn.innerHTML = `⏳ កំពុងរង់ចាំ Admin ចុច Approve ក្នុង Telegram...`;
 
                 if (splitPollingInterval) clearInterval(splitPollingInterval);
                 splitPollingInterval = setInterval(async () => {
-                    const check = await checkSubscriptionFromServer('splitter');
+                    const check = await checkSubscriptionFromServer('splitter', reqId);
                     if (check.active) {
                         clearInterval(splitPollingInterval);
-                        alert("🎉 Admin បានពិនិត្យវិក្កយបត្រ និង Approve ជោគជ័យ! Tool កាត់បំបែកភាគត្រូវបានបើកដំណើរការ!");
+                        alert("🎉 Admin បានចុច Approve ជោគជ័យ! Tool កាត់បំបែកភាគត្រូវបានដោះសោរ!");
                         closeSplitPaywall();
                         updateLicenseBadgesUI();
                         document.getElementById('splitVideoModal').classList.remove('hidden');
+                    } else if (check.request_status === 'rejected') {
+                        clearInterval(splitPollingInterval);
+                        alert("❌ វិក្កយបត្រត្រូវបាន Admin បដិសេធ (Reject)! សូមពិនិត្យផ្ទៀងផ្ទាត់ឡើងវិញ។");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឡើងវិញ`;
+                        document.getElementById('splitWaitNotice').classList.add('hidden');
                     }
                 }, 2000);
             } catch (err) {
@@ -1015,7 +1020,6 @@
         });
 
         window.openFullStudioPaywall = () => {
-            // Reset Form & Button State មុនពេលបើក Modal
             const btn = document.getElementById('btnSubmitStudioReceipt');
             if (btn) {
                 btn.disabled = false;
@@ -1052,18 +1056,27 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> កំពុងផ្ញើវិក្កយបត្រ...`;
 
             try {
-                await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                const res = await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                const resData = await res.json();
+                const reqId = resData.request_id;
+
                 document.getElementById('studioWaitNotice').classList.remove('hidden');
-                btn.innerHTML = `✅ បានផ្ញើវិក្កយបត្ររួចរាល់`;
+                btn.innerHTML = `⏳ កំពុងរង់ចាំ Admin ចុច Approve ក្នុង Telegram...`;
 
                 if (studioPollingInterval) clearInterval(studioPollingInterval);
                 studioPollingInterval = setInterval(async () => {
-                    const check = await checkSubscriptionFromServer('studio');
+                    const check = await checkSubscriptionFromServer('studio', reqId);
                     if (check.active) {
                         clearInterval(studioPollingInterval);
-                        alert("🎉 Admin បានពិនិត្យវិក្កយបត្រ និង Approve ជោគជ័យ! KHMERDUB STUDIO ត្រូវបានដោះសោរ!");
+                        alert("🎉 Admin បានចុចយល់ព្រម (Approve) ក្នុង Telegram ជោគជ័យ! KHMERDUB STUDIO ត្រូវបានដោះសោរ!");
                         closeStudioPaywall();
                         updateLicenseBadgesUI();
+                    } else if (check.request_status === 'rejected') {
+                        clearInterval(studioPollingInterval);
+                        alert("❌ វិក្កយបត្រត្រូវបាន Admin បដិសេធ (Reject)! សូមពិនិត្យផ្ទៀងផ្ទាត់ឡើងវិញ។");
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឡើងវិញ`;
+                        document.getElementById('studioWaitNotice').classList.add('hidden');
                     }
                 }, 2000);
             } catch (err) {
@@ -1131,7 +1144,7 @@
                         closeSplitModal();
                         await loadEpisodes();
                     } else {
-                        alert(`បានកាត់ជា ${data.parts_count} ភាគរួចរាល់! សូមជ្រើសរើស Folder ដើម្បីរក្សាទុកវីដេអូទាំងអស់...`);
+                        alert(`បានកាត់ជា ${data.parts_count} ភាគរួចរាល់! សូមជ្រើសរើស Folder ដើម្បីរក្សាទុក...`);
                         closeSplitModal();
                         await batchDownloadUrlsToFolder(data.parts.map(p => ({ url: p.download_url, filename: p.filename })));
                     }
@@ -1148,7 +1161,7 @@
         };
 
         async function batchDownloadUrlsToFolder(items) {
-            if (!items || items.length === 0) return alert("មិនទាន់មានវីដេអូណាដែល Dub ចប់សម្រាប់ទាញយកទេ!");
+            if (!items || items.length === 0) return alert("មិនទាន់មានវីដេអូដែល Dub ចប់សម្រាប់ទាញយកទេ!");
 
             if ('showDirectoryPicker' in window) {
                 try {
@@ -1167,7 +1180,7 @@
                             console.error(`Error saving ${item.filename}:`, fileErr);
                         }
                     }
-                    alert(`🎉 បានរក្សាទុកវីដេអូចំនួន ${count} ភាគចូលទៅក្នុង Folder របស់អ្នកជោគជ័យ!`);
+                    alert(`🎉 បានរក្សាទុកវីដេអូចំនួន ${count} ភាគចូលទៅក្នុង Folder ជោគជ័យ!`);
                 } catch (err) {
                     if (err.name !== 'AbortError') {
                         alert("មិនអាចចូលទៅកាន់ Folder បានទេ: " + err);
@@ -1187,7 +1200,7 @@
                 if (ep.status === 'completed' && ep.output_url) {
                     completedList.push({
                         url: ep.output_url,
-                        filename: `${ep.code}_${ep.filename}_Dubbed.mp4`
+                        filename: `${ep.code}_${ep.filename}_4K_Dubbed.mp4`
                     });
                 }
             });
@@ -1529,8 +1542,8 @@
         });
 
         player.addEventListener('loadedmetadata', () => {
-            const vw = player.videoWidth || 1920;
-            const vh = player.videoHeight || 1080;
+            const vw = player.videoWidth || 1080;
+            const vh = player.videoHeight || 1920;
             if (vh > vw) setAspectRatio('9:16');
             else setAspectRatio('16:9');
         });
@@ -1681,7 +1694,7 @@
                     rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">Waiting...</span>`;
                 } else if (ep.status === 'completed') {
                     rightActionEl = `
-            <button onclick="event.stopPropagation(); triggerCustomFolderDownload('${ep.output_url}', '${ep.code}_${ep.filename}_Dubbed.mp4');" 
+            <button onclick="event.stopPropagation(); triggerCustomFolderDownload('${ep.output_url}', '${ep.code}_${ep.filename}_4K_Dubbed.mp4');" 
                     class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/60 flex items-center gap-1.5 text-[10px] font-bold transition-all cursor-pointer shadow-md shadow-emerald-900/40" 
                     title="រើស Folder & ទាញយកភាគនេះ">
               <i class="fa-solid fa-folder-arrow-down text-[10px]"></i>
@@ -1755,7 +1768,7 @@
                 btnDownloadDubbed.disabled = false;
                 btnDownloadDubbed.className = "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer";
                 btnDownloadDubbed.onclick = () => {
-                    const dlName = `${ep.code}_${ep.filename}_Dubbed.mp4`;
+                    const dlName = `${ep.code}_${ep.filename}_4K_Dubbed.mp4`;
                     triggerCustomFolderDownload(ep.output_url, dlName);
                 };
             } else {
@@ -1944,11 +1957,11 @@
                 const renderingEps = eps.filter(e => e.status === 'rendering');
                 if (renderingEps.length > 0) {
                     const avgProg = Math.round(renderingEps.reduce((acc, cur) => acc + (cur.progress || 0), 0) / renderingEps.length);
-                    document.getElementById('renderStatusText').innerText = `កំពុង Render...`;
+                    document.getElementById('renderStatusText').innerText = `កំពុង Render 4K...`;
                     document.getElementById('renderPercentText').innerText = `${avgProg}%`;
                     document.getElementById('renderProgressBar').style.width = `${avgProg}%`;
                 } else if (eps.some(e => e.status === 'completed')) {
-                    document.getElementById('renderStatusText').innerText = `រួចរាល់ ១០០%`;
+                    document.getElementById('renderStatusText').innerText = `រួចរាល់ ១០០% (4K UHD)`;
                     document.getElementById('renderPercentText').innerText = `100%`;
                     document.getElementById('renderProgressBar').style.width = `100%`;
                 }
@@ -1991,13 +2004,17 @@
         }
 
         function getNormalizedCoords(el) {
-            const cW = overlayCanvas.clientWidth || 1;
-            const cH = overlayCanvas.clientHeight || 1;
+            const containerRect = container.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+
+            const relX = elRect.left - containerRect.left;
+            const relY = elRect.top - containerRect.top;
+
             return {
-                x: Math.max(0, el.offsetLeft / cW),
-                y: Math.max(0, el.offsetTop / cH),
-                w: Math.max(0.05, el.offsetWidth / cW),
-                h: Math.max(0.02, el.offsetHeight / cH)
+                x: Math.max(0, Math.min(relX / containerRect.width, 0.95)),
+                y: Math.max(0, Math.min(relY / containerRect.height, 0.95)),
+                w: Math.max(0.05, Math.min(elRect.width / containerRect.width, 0.95)),
+                h: Math.max(0.02, Math.min(elRect.height / containerRect.height, 0.95))
             };
         }
 
@@ -2037,7 +2054,7 @@
                 keep_bgm: keepBgmVal,
                 kiri_api_key: kiriApiKeyInput.value.trim(),
                 speaker_mode: document.getElementById('speakerModeSelect').value,
-                resolution: videoResolutionSelect.value,
+                resolution: "4k",
                 anti_copyright: antiCopyrightToggle.checked,
 
                 blur_items: compiledBlurs,
@@ -2066,12 +2083,12 @@
                 const exportBtnText = document.getElementById('btnExportAllText');
                 exportBtnText.innerText = `កំពុង Transcribe (${needTranscribe.length} ភាគ)...`;
                 await runTranscribeAllSequentially();
-                exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                exportBtnText.innerText = "Turbo Export ទាំងអស់ (Auto 4K)";
             }
 
             const targetRenderIds = allEpIds;
             const exportBtnText = document.getElementById('btnExportAllText');
-            exportBtnText.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> កំពុងចាប់ផ្ដើម Render...`;
+            exportBtnText.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> កំពុងចាប់ផ្ដើម Render 4K...`;
 
             try {
                 const payload = getRenderPayload(targetRenderIds);
@@ -2083,17 +2100,17 @@
                 });
 
                 if (res.ok) {
-                    exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                    exportBtnText.innerText = "Turbo Export ទាំងអស់ (Auto 4K)";
                     startProgressPolling();
                 } else {
                     const errData = await res.json();
                     alert("Render Error: " + (errData.detail || "Server error"));
-                    exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                    exportBtnText.innerText = "Turbo Export ទាំងអស់ (Auto 4K)";
                 }
             } catch (err) {
                 console.error("Export Error:", err);
                 alert("មិនអាចតភ្ជាប់ទៅកាន់ Server ដើម្បី Render បានទេ: " + err);
-                exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                exportBtnText.innerText = "Turbo Export ទាំងអស់ (Auto 4K)";
             }
         };
 

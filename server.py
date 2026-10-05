@@ -86,7 +86,7 @@ class BatchRenderConfig(BaseModel):
     logo_norm_w: Optional[float] = 0.40
     dialogues_map: Optional[dict] = None
 
-app = FastAPI(title="KhmerDub Pro Studio", version="75000.0.0")
+app = FastAPI(title="KhmerDub Pro Studio", version="76000.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -128,17 +128,18 @@ def save_licenses(data):
     except Exception as e:
         print(f"[!] Save License Error: {e}")
 
+# ចាក់សោរដាច់ខាត - មិនឱ្យ auto return True ឡើយ
 def is_service_active(client_sid: str, service_key: str) -> bool:
     db = load_licenses()
     client = db.get("clients", {}).get(client_sid, {})
     sub = client.get(service_key)
     if not sub:
-        return True
+        return False
     if sub.get("plan") == "lifetime":
         return True
     if sub.get("plan") == "month":
         return time.time() < sub.get("expires_at", 0)
-    return True
+    return False
 
 def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str, plan_type: str, price: str, receipt_path: Path):
     caption_html = (
@@ -150,7 +151,6 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
         f"🕒 <b>ម៉ោង:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>\n\n"
         f"👉 សូមពិនិត្យផ្ទៀងផ្ទាត់វិក្កយបត្រ រួចចុច Approve ឬ Reject ខាងក្រោម!"
     )
-
     keyboard = {
         "inline_keyboard": [
             [
@@ -162,10 +162,8 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
     keyboard_json = json.dumps(keyboard)
     url_photo = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     url_msg = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-
     sent_success = False
 
-    # ១. សាកល្បងផ្ញើរូបថតវិក្កយបត្រ
     if receipt_path.exists():
         try:
             with open(str(receipt_path), "rb") as img_file:
@@ -177,13 +175,11 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
                     "reply_markup": keyboard_json
                 }
                 resp = requests.post(url_photo, data=data, files=files, timeout=20)
-                print(f"[Telegram sendPhoto Log] Status: {resp.status_code} | Body: {resp.text}")
                 if resp.status_code == 200:
                     sent_success = True
-        except Exception as e:
-            print(f"[!] Telegram sendPhoto Exception: {e}")
+        except Exception:
+            pass
 
-    # ២. ប្រសិនបើផ្ញើរូបភាពមិនជោគជ័យ ផ្ញើសារអក្សរជំនួសភ្លាម (Fallback)
     if not sent_success:
         try:
             data_text = {
@@ -193,13 +189,12 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
                 "reply_markup": keyboard_json
             }
             resp_msg = requests.post(url_msg, json=data_text, timeout=15)
-            print(f"[Telegram sendMessage Log] Status: {resp_msg.status_code} | Body: {resp_msg.text}")
             if resp_msg.status_code == 200:
                 sent_success = True
-        except Exception as e:
-            print(f"[!] Telegram sendMessage Exception: {e}")
-
+        except Exception:
+            pass
     return sent_success
+
 def telegram_polling_worker():
     offset = 0
     while True:
@@ -575,6 +570,8 @@ async def submit_payment_receipt(
 async def check_subscription_status(service_key: str, request_id: Optional[str] = None, session_id: str = "", sid: Optional[str] = Cookie(None)):
     active_sid = session_id or sid or "default_user"
     db = load_licenses()
+    
+    # ពិនិត្យមើលសិទ្ធិប្រើប្រាស់ពិតប្រាកដ (ទាល់តែ Admin Approve រួចទើប Active)
     client_sub = db.get("clients", {}).get(active_sid, {}).get(service_key)
     if client_sub:
         if client_sub.get("plan") == "lifetime":
@@ -585,7 +582,13 @@ async def check_subscription_status(service_key: str, request_id: Optional[str] 
             if now < exp:
                 return {"active": True, "type": "month", "days_left": f"{max(1, int((exp - now)/86400))} ថ្ងៃ"}
             return {"active": False, "reason": "expired"}
-    req_status = db.get("requests", {}).get(request_id, {}).get("status", "pending") if request_id else "none"
+
+    req_status = "none"
+    if request_id and request_id in db.get("requests", {}):
+        req_status = db["requests"][request_id].get("status", "pending")
+        if req_status == "approved":
+            return {"active": True, "type": db["requests"][request_id].get("plan_type", "month")}
+
     return {"active": False, "request_status": req_status}
 
 @app.post("/api/transcribe-episode")
@@ -788,8 +791,8 @@ async def split_video_api(file: UploadFile = File(...), custom_title: str = Form
     _, uploads_dir, _, db_file = get_session_workspace(active_sid)
     user_db = load_user_db(db_file)
     temp_input = uploads_dir / f"src_{uuid.uuid4().hex[:6]}_{file.filename}"
-    with open(temp_input, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+    with open(temp_input, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
     total_dur, _, _ = get_media_duration_and_size(str(temp_input))
     part_seconds = max(15.0, float(split_minutes) * 60.0)
     current_count = len(user_db)
@@ -881,7 +884,7 @@ async def update_dialogues_api(episode_id: str = Form(...), dialogues_json: str 
     raise HTTPException(status_code=404, detail="Not found")
 
 # ============================================================
-# ULTRA 4K AUTO-UPSCALE & PRECISE BLUR ENGINE
+# ULTRA 4K AUTO-UPSCALE & PRECISE REGIONAL BLUR ENGINE
 # ============================================================
 def process_single_dialogue_voice(it, idx, ep_id, processed_dir, kiri_key):
     txt = str(it.get("khmer_text", "")).strip()
@@ -962,48 +965,49 @@ def render_worker(active_sid: str, cfg_dict: dict):
                 save_user_db(db_file, user_db)
 
             # -------------------------------------------------------------
-            # AUTO 4K RESOLUTION & FILTERGRAPH (SUPER-SHARP)
+            # PRECISE REGIONAL BLUR + 4K SUPER RESOLUTION (SHARP & CRISP)
             # -------------------------------------------------------------
-            vf_list = []
+            v_nodes = []
+            curr_v = "[0:v]"
 
-            # ១. Regional Blur (បិទបាំងតែត្រង់ប្រអប់ Subtitle ដែលកំណត់)
             blur_items = cfg_dict.get("blur_items", []) or []
-            for b in blur_items:
-                raw_bx = int(float(b.get("norm_x", 0.10)) * base_w)
-                raw_by = int(float(b.get("norm_y", 0.80)) * base_h)
-                raw_bw = int(float(b.get("norm_w", 0.80)) * base_w)
-                raw_bh = int(float(b.get("norm_h", 0.12)) * base_h)
+            for b_idx, b in enumerate(blur_items):
+                raw_bx = float(b.get("norm_x", 0.10)) * base_w
+                raw_by = float(b.get("norm_y", 0.80)) * base_h
+                raw_bw = float(b.get("norm_w", 0.80)) * base_w
+                raw_bh = float(b.get("norm_h", 0.12)) * base_h
 
-                bx = make_even(max(2, min(raw_bx, base_w - 40)))
-                by = make_even(max(2, min(raw_by, base_h - 40)))
-                bw = make_even(max(20, min(raw_bw, base_w - bx - 4)))
-                bh = make_even(max(10, min(raw_bh, base_h - by - 4)))
+                bx = make_even(max(0, min(raw_bx, base_w - 20)))
+                by = make_even(max(0, min(raw_by, base_h - 20)))
+                bw = make_even(max(20, min(raw_bw, base_w - bx)))
+                bh = make_even(max(10, min(raw_bh, base_h - by)))
 
-                vf_list.append(f"delogo=x={bx}:y={by}:w={bw}:h={bh}:show=0")
+                v_nodes.append(f"{curr_v}split=2[main_{b_idx}][crop_src_{b_idx}]")
+                v_nodes.append(f"[crop_src_{b_idx}]crop={bw}:{bh}:{bx}:{by},boxblur=15:3[patch_{b_idx}]")
+                v_nodes.append(f"[main_{b_idx}][patch_{b_idx}]overlay={bx}:{by}[v_blurred_{b_idx}]")
+                curr_v = f"[v_blurred_{b_idx}]"
 
-            # ២. Text Overlays (ស្ទីលអក្សរច្បាស់)
+            # ដាក់អក្សរ Overlays
             text_items = cfg_dict.get("text_items", []) or []
-            for t in text_items:
+            for t_idx, t in enumerate(text_items):
                 raw_txt = str(t.get("text", "")).strip()
                 if raw_txt:
-                    clean_txt = raw_txt.replace(":", "\\:").replace("'", "\\'").replace("%", "\\%")
+                    clean_txt = raw_txt.replace(":", "\\:").replace("'", "").replace("%", "")
                     tx = max(0, min(int(float(t.get("norm_x", 0.05)) * base_w), base_w - 50))
                     ty = max(0, min(int(float(t.get("norm_y", 0.05)) * base_h), base_h - 30))
                     tsize = int(t.get("size", 34))
-                    vf_list.append(f"drawtext=text='{clean_txt}':fontcolor=gold:fontsize={tsize}:x={tx}:y={ty}:shadowcolor=black@0.9:shadowx=2:shadowy=2")
+                    next_v = f"[v_txt_{t_idx}]"
+                    v_nodes.append(f"{curr_v}drawtext=text='{clean_txt}':fontcolor=gold:fontsize={tsize}:x={tx}:y={ty}:shadowcolor=black@0.9:shadowx=2:shadowy=2{next_v}")
+                    curr_v = next_v
 
-            # ៣. AUTO 4K SUPER-RESOLUTION SCALING
-            # បើជា 9:16 (វីដេអូបញ្ឈរ) -> 2160x3840 | បើ 16:9 (ផ្តេក) -> 3840x2160
+            # AUTO 4K UPSCALE (បញ្ឈរ=2160x3840 | ផ្តេក=3840x2160)
             if base_h > base_w:
                 target_4k_w, target_4k_h = 2160, 3840
             else:
                 target_4k_w, target_4k_h = 3840, 2160
 
-            # ប្រើ Lanczos Filter គុណភាពខ្ពស់បំផុត + Unsharp Masking ដើម្បីកម្ចាត់ភាពព្រិល
-            vf_list.append(f"scale={target_4k_w}:{target_4k_h}:flags=lanczos")
-            vf_list.append("unsharp=5:5:1.0:5:5:0.0")
-
-            video_filter_arg = ",".join(vf_list)
+            v_nodes.append(f"{curr_v}scale={target_4k_w}:{target_4k_h}:flags=lanczos,unsharp=5:5:1.0:5:5:0.0[v_final]")
+            video_filter_complex = ";".join(v_nodes)
 
             dub_vol = float(cfg_dict.get("dub_volume", 2.20))
             raw_title = ep.get("filename", "") or "Part"
@@ -1018,18 +1022,16 @@ def render_worker(active_sid: str, cfg_dict: dict):
                 audio_filter = f"[1:a]volume={dub_vol}[a_final]"
                 audio_inputs = ["-i", str(dub_track)]
 
-            full_filter_complex = f"{audio_filter};[0:v]{video_filter_arg}[v_final]"
+            full_filter_complex = f"{audio_filter};{video_filter_complex}"
 
-            # -------------------------------------------------------------
-            # 4K ULTRA BITRATE ENCODING (CRF 14 + 25M-35M BITRATE)
-            # -------------------------------------------------------------
+            # 4K ULTRA BITRATE ENCODING (CRF 14 + 28M Bitrate ធានាច្បាស់ឥតខ្ចោះ)
             if encoder_choice == "h264_nvenc":
                 v_codec_args = [
                     "-c:v", "h264_nvenc",
-                    "-preset", "p5",           # High Quality
+                    "-preset", "p5",
                     "-rc", "vbr",
-                    "-cq", "14",               # Ultra Clear 4K
-                    "-b:v", "28M",             # 28 Mbps Bitrate ធានាមិនបែកគ្រាប់
+                    "-cq", "14",
+                    "-b:v", "28M",
                     "-maxrate", "35M",
                     "-bufsize", "40M",
                     "-pix_fmt", "yuv420p"
@@ -1038,7 +1040,7 @@ def render_worker(active_sid: str, cfg_dict: dict):
                 v_codec_args = [
                     "-c:v", "libx264",
                     "-preset", "faster",
-                    "-crf", "14",              # Ultra High Fidelity
+                    "-crf", "14",
                     "-b:v", "24M",
                     "-maxrate", "30M",
                     "-bufsize", "35M",
@@ -1060,6 +1062,8 @@ def render_worker(active_sid: str, cfg_dict: dict):
             ]
 
             proc = subprocess.run(render_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if proc.returncode != 0:
+                print(f"[FFmpeg Detailed Error]: {proc.stderr[:500]}")
 
             for c in clips:
                 Path(c["path"]).unlink(missing_ok=True)
@@ -1096,7 +1100,7 @@ async def download_user_file(session_id: str, filename: str):
 if __name__ == "__main__":
     import uvicorn
     print("\n" + "=" * 50)
-    print(" 🚀 KHMERDUB STUDIO PRO - AUTO 4K ULTRA HD RENDER")
+    print(" 🚀 KHMERDUB STUDIO PRO - BULLETPROOF AUTO 4K & BLUR")
     print(" 👉 http://127.0.0.1:8080")
     print("=" * 50 + "\n")
     uvicorn.run("server:app", host="0.0.0.0", port=8080, log_level="info")
