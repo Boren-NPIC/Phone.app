@@ -4,11 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KhmerDub Studio Pro - Mobile & Desktop</title>
+    <title>KhmerDub Studio Pro - VIP Protected</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
         * {
@@ -16,491 +15,1597 @@
             box-sizing: border-box;
         }
 
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
         body {
-            background-color: #040711;
-        }
-
-        .glow-cyan {
-            box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.45);
-        }
-
-        .glow-rose {
-            box-shadow: 0 0 20px -3px rgba(225, 29, 72, 0.45);
-        }
-
-        .glow-emerald {
-            box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.45);
-        }
-
-        .glow-amber {
-            box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.45);
-        }
-
-        .glass-card {
-            background: linear-gradient(135deg, rgba(14, 25, 46, 0.85) 0%, rgba(6, 12, 24, 0.95) 100%);
-            border: 1px solid rgba(20, 45, 80, 0.8);
-            backdrop-filter: blur(12px);
-        }
-
-        .custom-select {
-            background: #060d1b;
-            border: 1px solid #142a4a;
-            color: #f1f5f9;
-            transition: all 0.2s ease;
-        }
-
-        .custom-select:focus {
-            border-color: #06b6d4;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
-            outline: none;
+            background-color: #060b14;
         }
 
         ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #040711;
+            background: #070d18;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #162a45;
+            background: #1e293b;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #06b6d4;
+            background: #0ea5e9;
+        }
+
+        .studio-select {
+            background-color: #050a14;
+            border: 1px solid #14233a;
+            color: #e2e8f0;
+        }
+
+        .studio-select:focus {
+            outline: none;
+            border-color: #0284c7;
+        }
+
+        .drag-box {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            z-index: 20;
+            touch-action: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: -5px;
+            bottom: -5px;
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            border-radius: 3px;
+            cursor: nwse-resize;
+        }
+
+        .style-gold {
+            color: #ffd700;
+            text-shadow: 2px 2px 4px #000;
+            font-weight: 800;
+        }
+
+        .style-neon {
+            color: #00f3ff;
+            text-shadow: 0 0 8px #0077ff;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid #00f3ff;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-weight: 700;
+        }
+
+        .style-red_banner {
+            color: #ffffff;
+            background: #dc2626;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-weight: 800;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .style-retro {
+            color: #facc15;
+            text-shadow: 2px 2px 0px #dc2626;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-weight: 800;
+        }
+
+        .style-minimal {
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-weight: 600;
+        }
+
+        .style-default {
+            color: #ef4444;
+            text-shadow: 1px 1px 3px #000;
+            font-weight: 800;
         }
     </style>
 </head>
 
-<body class="text-slate-100 flex flex-col h-screen overflow-hidden select-none bg-[#040711]">
+<body class="text-slate-200 flex flex-col h-screen overflow-hidden select-none bg-[#060b14]">
 
-    <!-- TOP HEADER (RESPONSIVE) -->
+    <!-- TOP HEADER -->
     <header
-        class="border-b border-[#12233f] bg-[#070e1b]/95 px-3 py-2.5 md:h-14 md:py-0 flex flex-wrap md:flex-nowrap items-center justify-between shrink-0 shadow-2xl backdrop-blur-md z-30 gap-2">
-        <div class="flex items-center gap-2.5">
+        class="h-14 border-b border-[#132238] bg-[#09111e] px-4 flex items-center justify-between shrink-0 shadow-md z-30">
+        <div class="flex items-center gap-3">
             <div
-                class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 font-black text-sm md:text-base">
-                <i class="fa-solid fa-bolt animate-pulse"></i>
+                class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 font-bold shrink-0">
+                <i class="fa-solid fa-bolt"></i>
             </div>
-            <div>
-                <div class="flex items-center gap-1.5">
-                    <span
-                        class="font-extrabold text-xs md:text-sm tracking-wide bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-300 bg-clip-text text-transparent uppercase">KhmerDub
+            <div class="truncate">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm tracking-wide text-white uppercase truncate">KhmerDub Studio
                         Pro</span>
-                    <span
-                        class="text-[9px] bg-cyan-500/15 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded-full font-bold">2026</span>
+                    <span id="vipStatusBadge"
+                        class="hidden sm:inline text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2 py-0.5 rounded font-bold cursor-pointer"
+                        onclick="openFullStudioPaywall()">
+                        <i class="fa-solid fa-lock mr-1"></i>LOCKED (ទិញសិទ្ធិប្រើប្រាស់)
+                    </span>
                 </div>
-                <p class="text-[9px] md:text-[10px] text-slate-400 truncate max-w-[200px] md:max-w-none">បកប្រែ &
-                    អស់សំឡេងដើម 100%</p>
+                <p class="text-[10px] text-slate-400 truncate">ស្ទីលអក្សរ • Multi-Blur • Tool កាត់បំបែកភាគ • Telegram
+                    Auto-Approve</p>
             </div>
         </div>
 
         <!-- ACTION BUTTONS BAR -->
-        <div class="flex items-center gap-1.5 md:gap-2 flex-wrap">
-            <div
-                class="hidden lg:flex items-center gap-2 bg-[#040914] border border-cyan-500/40 px-2.5 py-1 rounded-lg text-xs text-slate-300">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span class="text-[11px]">Direct Dub</span>
-            </div>
-
-            <label for="batchFileInput"
-                class="cursor-pointer flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white rounded-lg text-[11px] md:text-xs font-bold shadow-md active:scale-95">
+        <div class="flex items-center gap-2.5">
+            <button onclick="handleActionWithStudioCheck('upload')"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-lg text-xs font-semibold shadow transition-all shrink-0 cursor-pointer">
                 <i class="fa-solid fa-plus"></i>
-                <span>ថែមភាគ</span>
-            </label>
+                <span>ថែមវីដេអូភាគ</span>
+            </button>
             <input type="file" id="batchFileInput" multiple accept="video/*" class="hidden" />
 
-            <button id="btnTranscribeCurrent"
-                class="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-[#e11d48] to-[#be123c] text-white rounded-lg text-[11px] md:text-xs font-bold glow-rose active:scale-95 cursor-pointer">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                <span id="btnTranscribeText">Transcribe</span>
+            <button onclick="checkAndOpenSplitTool()"
+                class="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg text-xs font-bold shadow-md shadow-orange-950/40 transition-all shrink-0 cursor-pointer">
+                <i class="fa-solid fa-scissors text-xs"></i>
+                <span>Tool កាត់បំបែកភាគ</span>
+                <span id="splitBadgeStatus"
+                    class="bg-black/40 text-[9px] px-1.5 py-0.2 rounded font-bold text-amber-300">1.5$</span>
             </button>
 
-            <button id="btnRenderCurrent"
-                class="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-[#0d9488] to-[#0f766e] text-white rounded-lg text-[11px] md:text-xs font-bold glow-emerald active:scale-95 cursor-pointer">
-                <i class="fa-solid fa-bolt"></i>
-                <span id="btnRenderCurrentText">Dub ភាគនេះ</span>
+            <button id="btnTranscribeAll" onclick="handleActionWithStudioCheck('transcribe')"
+                class="flex items-center gap-2 px-3.5 py-1.5 bg-[#9333ea] hover:bg-[#7e22ce] text-white rounded-lg text-xs font-bold shadow-md shadow-purple-900/30 transition-all shrink-0 cursor-pointer">
+                <i class="fa-solid fa-layer-group text-xs"></i>
+                <span id="btnTranscribeAllText">Transcribe ទាំងអស់</span>
             </button>
 
-            <button id="btnExportAll"
-                class="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-[#0284c7] to-[#0369a1] text-white rounded-lg text-[11px] md:text-xs font-bold glow-cyan active:scale-95 cursor-pointer">
+            <button id="btnExportAll" onclick="triggerStartExport()"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-lg text-xs font-semibold shadow-lg shadow-cyan-600/20 transition-all shrink-0 cursor-pointer">
                 <i class="fa-solid fa-play"></i>
-                <span>Export</span>
+                <span id="btnExportAllText">Turbo Export ទាំងអស់</span>
             </button>
         </div>
     </header>
 
-    <!-- MAIN WORKSPACE CONTAINER -->
+    <!-- MAIN WORKSPACE -->
     <div class="flex flex-1 overflow-hidden relative">
 
-        <!-- SECTION 1: EPISODES LIST (PANEL A) -->
+        <div id="studioLockoutOverlay"
+            class="absolute inset-0 z-40 bg-[#060b14]/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none hidden">
+            <div class="max-w-md p-6 rounded-2xl bg-[#091222]/95 border border-cyan-500/40 shadow-2xl space-y-4">
+                <div
+                    class="w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-cyan-500/20 animate-bounce">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="space-y-1">
+                    <h2 class="text-base font-bold text-white uppercase tracking-wide">KHMERDUB STUDIO ត្រូវបានចាក់សោរ
+                    </h2>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        ដើម្បីប្រើប្រាស់មុខងារបកប្រែ AI, បញ្ចូលសំឡេងតួប្រុស/ស្រី, កាត់ត និង Export វីដេអូបាន
+                        សូមធ្វើការជាវសិទ្ធិប្រើប្រាស់ និងផ្ញើវិក្កយបត្រជាមុនសិន។
+                    </p>
+                </div>
+                <div
+                    class="p-3 bg-[#060c18] border border-[#162740] rounded-xl flex items-center justify-around text-xs font-semibold">
+                    <div class="text-slate-300">កញ្ចប់ ១ ខែ: <strong
+                            class="text-cyan-400 font-mono text-sm">5.00$</strong></div>
+                    <div class="h-4 w-[1px] bg-slate-700"></div>
+                    <div class="text-slate-300">កញ្ចប់ ១ ជីវិត: <strong
+                            class="text-emerald-400 font-mono text-sm">49.99$</strong></div>
+                </div>
+                <button onclick="openFullStudioPaywall()"
+                    class="w-full py-3 bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-900/50 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-receipt text-sm"></i>
+                    <span>ស្កេនបង់ប្រាក់ & ផ្ញើវិក្កយបត្រ Approve ឥឡូវនេះ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- LEFT SIDEBAR -->
         <aside id="panelEpisodes"
-            class="w-full md:w-64 border-r border-[#12233f] bg-[#060c18] flex flex-col shrink-0 md:flex transition-all">
-            <div class="p-2.5 md:p-3 border-b border-[#12233f] flex items-center justify-between bg-[#081223]">
-                <div class="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+            class="w-full md:w-72 border-r border-[#132238] bg-[#070e1b] flex flex-col shrink-0 md:!flex">
+            <div class="p-3 border-b border-[#132238] flex items-center justify-between bg-[#081223]">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
                     <i class="fa-solid fa-film text-cyan-400"></i>
                     <span>ជួរវីដេអូភាគ</span>
-                    <span id="epCountBadge"
-                        class="bg-cyan-950/60 border border-cyan-800/60 text-cyan-300 px-2 py-0.5 rounded-full text-[10px] font-bold">0
+                    <span id="epCountBadge" class="bg-[#121e33] text-slate-400 px-1.5 py-0.2 rounded text-[10px]">0
                         ភាគ</span>
                 </div>
                 <button id="btnClearAllEpisodes"
-                    class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold">
+                    class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold cursor-pointer">
                     <i class="fa-solid fa-trash-can"></i> សម្អាត
                 </button>
             </div>
 
-            <div class="p-2 border-b border-[#12233f] bg-[#040813]">
+            <div class="p-2.5 border-b border-[#132238] bg-[#081324] flex items-center justify-between gap-2">
+                <button id="btnDownloadAllCompleted" onclick="downloadAllCompletedEpisodesToFolder()"
+                    class="w-full py-1.5 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-950/40 transition-all cursor-pointer">
+                    <i class="fa-solid fa-folder-arrow-down text-sm"></i>
+                    <span>ទាញយកទាំងអស់ (រើស Folder)</span>
+                </button>
+            </div>
+
+            <div class="p-2.5 border-b border-[#132238] bg-[#050913]">
                 <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
                     <input type="checkbox" id="mergeEpisodesCheckbox"
-                        class="rounded border-cyan-700 bg-[#091220] text-cyan-500 focus:ring-0" />
-                    <span>ច្របាច់បញ្ចូលគ្នា (Merge) ទៅជា 1</span>
+                        class="rounded border-slate-700 bg-[#091220] text-cyan-500 focus:ring-0" />
+                    <span>ច្របាច់បញ្ចូលគ្នា (Merge) ទៅជា 1 រឿង</span>
                 </label>
             </div>
 
-            <div id="episodesListContainer" class="flex-1 overflow-y-auto p-2 space-y-1.5"></div>
+            <div id="episodesListContainer" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
         </aside>
 
-        <!-- SECTION 2: DIALOGUES & TIMELINE (PANEL B) -->
-        <main id="panelDialogues" class="hidden md:flex flex-1 flex-col bg-[#050a14] min-w-0 overflow-hidden relative">
-            <div
-                class="h-9 md:h-10 border-b border-[#12233f] px-3 md:px-4 flex items-center justify-between bg-[#07101f]">
+        <!-- CENTER PANEL -->
+        <main id="panelDialogues" class="hidden md:!flex flex-1 flex-col bg-[#050a14] min-w-0 overflow-hidden relative">
+            <div class="h-10 border-b border-[#132238] px-4 flex items-center justify-between bg-[#08101e] shrink-0">
                 <div class="flex items-center gap-2 text-xs truncate">
                     <i class="fa-solid fa-clapperboard text-amber-400"></i>
-                    <span id="activeEpisodeTitle" class="font-bold text-slate-100 truncate">សូមជ្រើសរើសវីដេអូភាគ</span>
+                    <span id="activeEpisodeTitle" class="font-bold text-slate-200 truncate">សូមជ្រើសរើសវីដេអូភាគ</span>
                 </div>
-                <div class="flex items-center gap-2 text-[10px] md:text-[11px] text-slate-400 shrink-0">
-                    <span id="dialogueCountBadge"
-                        class="bg-[#0e1e36] text-cyan-300 px-2 py-0.5 rounded border border-cyan-900/40">0 ឃ្លា</span>
-                    <span class="hidden md:inline">Engine: <strong class="text-cyan-400 font-bold">Gemini Flash
+                <div class="flex items-center gap-3 text-[11px] text-slate-400 shrink-0">
+                    <span id="dialogueCountBadge">0 ឃ្លា</span>
+                    <span>Engine: <strong id="activeEngineText" class="text-cyan-400 font-semibold">💎 Gemini Flash
                             AI</strong></span>
                 </div>
             </div>
 
-            <div id="dialoguesScrollArea" class="flex-1 overflow-y-auto p-2.5 md:p-4 space-y-2.5 md:space-y-3">
+            <div id="dialoguesScrollArea" class="flex-1 overflow-y-auto p-4 space-y-3">
                 <div id="emptyDialoguePlaceholder"
-                    class="h-full flex flex-col items-center justify-center text-slate-600 gap-3">
+                    class="h-full flex flex-col items-center justify-center text-slate-600 gap-2">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 flex items-center justify-center text-cyan-500/40 text-2xl">
+                        class="w-12 h-12 rounded-xl bg-[#0e1828] border border-[#1b2f4d] flex items-center justify-center text-slate-500 text-xl">
                         <i class="fa-solid fa-closed-captioning"></i>
                     </div>
-                    <p class="text-xs text-slate-400 font-medium">សូមចុច «Turbo Transcribe» ដើម្បីទាញយកអត្ថបទ</p>
+                    <p class="text-xs text-slate-400">មិនទាន់មានទិន្នន័យអក្សរនៅឡើយ។ សូមចុច «Transcribe ទាំងអស់»</p>
                 </div>
             </div>
 
             <!-- TIMELINE BOTTOM -->
-            <div class="h-32 md:h-40 border-t border-[#12233f] bg-[#060c18] flex flex-col shrink-0">
-                <div
-                    class="h-8 md:h-9 border-b border-[#12233f] px-3 flex items-center justify-between text-xs bg-[#081223]">
-                    <div class="flex items-center gap-2 md:gap-3">
+            <div class="h-44 border-t border-[#132238] bg-[#070e1b] flex flex-col shrink-0">
+                <div class="h-9 border-b border-[#132238] px-3 flex items-center justify-between text-xs bg-[#081223]">
+                    <div class="flex items-center gap-3">
                         <button id="btnTimelinePlay"
-                            class="w-5 h-5 md:w-6 md:h-6 rounded-lg bg-cyan-600 text-white flex items-center justify-center shadow">
-                            <i class="fa-solid fa-play text-[9px]"></i>
+                            class="w-7 h-7 rounded-lg bg-[#0284c7] hover:bg-cyan-500 text-white flex items-center justify-center cursor-pointer shadow">
+                            <i id="btnTimelinePlayIcon" class="fa-solid fa-play text-[11px]"></i>
                         </button>
-                        <span id="timelineTimeDisplay"
-                            class="mono text-cyan-300 font-bold text-[11px] md:text-xs">00:00.00</span>
+                        <span id="timelineTimeDisplay" class="font-mono text-cyan-300 text-xs font-bold">00:00.00 /
+                            00:00.00</span>
                     </div>
-                    <div class="flex items-center gap-2 text-[9px] md:text-[10px] text-slate-400">
+                    <div class="flex items-center gap-3 text-[10px] text-slate-400">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                            Vid</span>
+                            Video</span>
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            ប្រុស</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span>
-                            ស្រី</span>
+                            Dub (ប្រុស)</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Dub
+                            (ស្រី)</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            Subtitles</span>
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-x-auto p-2 space-y-1 mono text-[10px]">
-                    <div class="h-5 bg-[#0a1424] rounded flex items-center px-2 text-slate-400 border border-[#162740]">
-                        <span class="w-10 shrink-0 font-bold text-cyan-400 text-[9px]">VIDEO</span>
-                        <div
-                            class="flex-1 bg-cyan-950/40 border border-cyan-800/40 rounded h-3.5 px-2 text-cyan-300 truncate text-[9px]">
-                            Master Video</div>
+                <div class="flex-1 overflow-x-auto p-2 space-y-1.5 font-mono text-[10px]">
+                    <div class="h-6 bg-[#0c1626] rounded flex items-center px-2 text-slate-400 border border-[#162740]">
+                        <span class="w-12 shrink-0">VIDEO</span>
+                        <div id="timelineVideoNameTrack"
+                            class="flex-1 bg-cyan-950/40 border border-cyan-800/40 rounded h-4 px-2 text-cyan-300 truncate">
+                            Video Track Master</div>
                     </div>
-                    <div class="h-5 bg-[#0a1424] rounded flex items-center px-2 text-slate-400 border border-[#162740]">
-                        <span class="w-10 shrink-0 font-bold text-emerald-400 text-[9px]">DUB</span>
-                        <div id="timelineDubTrack" class="flex-1 relative h-3.5 bg-[#040813] rounded overflow-hidden">
+                    <div class="h-6 bg-[#0c1626] rounded flex items-center px-2 text-slate-400 border border-[#162740]">
+                        <span class="w-12 shrink-0">DUB</span>
+                        <div id="timelineDubTrack" class="flex-1 relative h-4 bg-[#050a14] rounded overflow-hidden">
+                        </div>
+                    </div>
+                    <div class="h-6 bg-[#0c1626] rounded flex items-center px-2 text-slate-400 border border-[#162740]">
+                        <span class="w-12 shrink-0">SUB</span>
+                        <div id="timelineSubTrack" class="flex-1 relative h-4 bg-[#050a14] rounded overflow-hidden">
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- SECTION 3: CONTROLS & MONITOR (PANEL C) -->
+        <!-- RIGHT PANEL -->
         <aside id="panelControls"
-            class="hidden md:flex w-full md:w-84 border-l border-[#12233f] bg-[#060d1b] flex-col shrink-0 overflow-y-auto">
+            class="hidden md:!flex w-full md:w-80 lg:w-96 border-l border-[#132238] bg-[#070e1b] flex-col shrink-0 overflow-y-auto">
 
-            <!-- MONITOR -->
-            <div class="p-3 border-b border-[#12233f] bg-gradient-to-b from-[#081224] to-[#060d1a]">
+            <!-- VIDEO MONITOR -->
+            <div class="p-3 border-b border-[#132238]">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-desktop text-cyan-400"></i> Video Monitor
+                    <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-desktop text-cyan-400"></i> VIDEO MONITOR
                     </span>
-                    <div class="flex gap-1 text-[10px] font-bold">
+                    <div class="flex gap-1 text-[10px]">
                         <button id="btnAspect916" onclick="setAspectRatio('9:16')"
-                            class="px-2 py-0.5 rounded bg-[#0a1424] border border-cyan-900/50 text-slate-300">9:16</button>
+                            class="px-1.5 py-0.5 rounded bg-[#101b2d] text-slate-300">9:16</button>
                         <button id="btnAspect169" onclick="setAspectRatio('16:9')"
-                            class="px-2 py-0.5 rounded bg-cyan-600/30 text-cyan-300 border border-cyan-400/60">16:9</button>
+                            class="px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30">16:9</button>
                     </div>
                 </div>
+
                 <div id="monitorContainer"
-                    class="aspect-video bg-black rounded-xl overflow-hidden border border-cyan-500/40 flex items-center justify-center relative shadow-2xl">
-                    <video id="studioVideoPlayer" class="w-full h-full object-contain" controls
-                        preload="metadata"></video>
+                    class="aspect-video max-h-56 mx-auto bg-black rounded-xl overflow-hidden border border-[#162740] flex items-center justify-center relative shadow-lg">
+                    <video id="studioVideoPlayer" class="w-full h-full object-contain pointer-events-auto" controls
+                        preload="auto"></video>
+
+                    <div id="overlayCanvas" class="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div id="dragLogoBox"
+                            class="drag-box pointer-events-auto hidden border-2 border-dashed border-amber-400"
+                            style="top: 15%; left: 15%; width: 90px; height: 90px;">
+                            <img id="canvasLogoImg" src="" class="w-full h-full object-contain pointer-events-none" />
+                            <div class="resize-handle bg-amber-400" data-target="dragLogoBox"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- CONTROLS FORM -->
-            <div class="p-3 md:p-4 space-y-3.5 text-xs pb-16 md:pb-4">
+            <!-- TAB NAVIGATION -->
+            <div class="flex border-b border-[#132238] bg-[#091322]">
+                <button id="tabBtnAudio" onclick="switchControlTab('audio')"
+                    class="flex-1 py-2.5 text-xs font-bold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>សំឡេង & AI</span>
+                </button>
+                <button id="tabBtnOverlays" onclick="switchControlTab('overlays')"
+                    class="flex-1 py-2.5 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                    <span>កែវីដេអូ & Overlays</span>
+                </button>
+            </div>
 
-                <!-- 1-CLICK PRESETS -->
-                <div class="glass-card p-3 rounded-2xl border-cyan-500/30 space-y-2">
-                    <div class="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5 uppercase">
-                        <i class="fa-solid fa-sliders text-cyan-400"></i> Preset រួចស្រេច (1-Click)
-                    </div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <button onclick="applyPreset('tiktok')" id="presetTikTok"
-                            class="p-2 rounded-xl bg-[#081220] border border-[#162a45] text-center">
-                            <i class="fa-brands fa-tiktok text-slate-400 text-xs mb-0.5"></i>
-                            <div class="font-bold text-[10px]">TikTok</div>
-                        </button>
-                        <button onclick="applyPreset('youtube')" id="presetYouTube"
-                            class="p-2 rounded-xl bg-[#081220] border border-[#162a45] text-center">
-                            <i class="fa-brands fa-youtube text-slate-400 text-xs mb-0.5"></i>
-                            <div class="font-bold text-[10px]">YouTube</div>
-                        </button>
-                        <button onclick="applyPreset('original')" id="presetOriginal"
-                            class="p-2 rounded-xl bg-amber-500/20 border border-amber-500/80 text-center glow-amber">
-                            <i class="fa-solid fa-bolt text-amber-400 text-xs mb-0.5"></i>
-                            <div class="font-bold text-[10px] text-amber-300">Original</div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- MODULES BADGES -->
-                <div class="glass-card p-3 rounded-2xl border-cyan-500/30 space-y-2">
-                    <div class="text-[10px] font-bold text-slate-300 uppercase">
-                        <i class="fa-solid fa-cubes text-cyan-400"></i> Modules
-                    </div>
-                    <div class="grid grid-cols-4 gap-1.5">
-                        <div class="p-1.5 rounded-lg bg-[#081220] border border-[#162a45] text-center">
-                            <div class="font-bold text-[9px] text-slate-300">Frame</div>
-                            <div class="text-[8px] text-cyan-400 mono">1080p</div>
-                        </div>
-                        <div class="p-1.5 rounded-lg bg-[#081220] border border-[#162a45] text-center">
-                            <div class="font-bold text-[9px] text-slate-300">Voice</div>
-                            <div class="text-[8px] text-rose-400 mono">Auto</div>
-                        </div>
-                        <div onclick="toggleFeature('demucs')" id="demucsCard"
-                            class="p-1.5 rounded-lg bg-[#081220] border border-[#162a45] text-center cursor-pointer">
-                            <div class="font-bold text-[9px] text-slate-300">Demucs</div>
-                            <div id="demucsBadge" class="text-[8px] text-slate-500">Off</div>
-                        </div>
-                        <div id="outputFolderCard"
-                            class="p-1.5 rounded-lg bg-emerald-950/40 border border-emerald-400 text-center">
-                            <div class="font-bold text-[9px] text-emerald-300">Folder</div>
-                            <div class="text-[8px] text-emerald-400">Smart</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SOURCE LANGUAGE -->
-                <div class="p-2.5 rounded-xl bg-[#081222] border border-[#152a46] space-y-1">
-                    <label class="block text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
-                        <i class="fa-solid fa-language text-cyan-400"></i> ភាសាដើមក្នុងវីដេអូ
+            <!-- TAB CONTENT 1: AUDIO & AI -->
+            <div id="tabContentAudio" class="p-3.5 space-y-3.5 text-xs pb-16 md:pb-4">
+                <div>
+                    <label class="block text-slate-300 mb-1 flex items-center justify-between font-semibold">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-tv text-amber-400"></i>
+                            កម្រិតច្បាស់វីដេអូ (Video Resolution)</span>
+                        <span class="text-[10px] text-amber-400 font-mono">Ultra Quality</span>
                     </label>
-                    <select id="sourceLangSelect" class="w-full px-2.5 py-1.5 rounded-lg custom-select text-xs">
-                        <option value="auto">Auto Detect</option>
-                        <option value="en">English (អង់គ្លេស)</option>
-                        <option value="zh">Chinese (ចិន)</option>
+                    <select id="videoResolutionSelect"
+                        class="w-full px-2.5 py-2 rounded-lg studio-select text-xs cursor-pointer font-medium border border-amber-500/30 focus:border-amber-400">
+                        <option value="original">💎 Original (ទម្រង់ដើម - គុណភាពខ្ពស់បំផុត High Bitrate)</option>
+                        <option value="1080p">🎬 1080p FHD (ច្បាស់កម្រិតខ្ពស់ - High Definition 1920x1080)</option>
+                        <option value="4k">🌟 4K UHD (ច្បាស់ឥតខ្ចោះ - Ultra HD 3840x2160)</option>
                     </select>
                 </div>
 
-                <!-- ENGINE -->
-                <div class="p-2.5 rounded-xl bg-[#081222] border border-[#152a46] space-y-1">
-                    <label class="block text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
-                        <i class="fa-solid fa-microchip text-rose-400"></i> AI Translate Engine
+                <div>
+                    <label class="block text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-language text-cyan-400"></i>
+                        <span>ភាសាដើមក្នុងវីដេអូ (Source Language)</span>
                     </label>
-                    <select id="aiModelSelect" class="w-full px-2.5 py-1.5 rounded-lg custom-select text-xs">
-                        <option value="gemini">Gemini Flash (Free API)</option>
-                        <option value="mwapi">MWAPI Cloud (GPT-4o-mini)</option>
-                        <option value="local">Direct Auto-Translator</option>
+                    <select id="sourceLangSelect"
+                        class="w-full px-2.5 py-2 rounded-lg studio-select text-xs cursor-pointer">
+                        <option value="auto">🌐 Auto Detect (ស្គាល់ដោយស្វ័យប្រវត្តិ)</option>
+                        <option value="en">🇬🇧 English (អង់គ្លេស)</option>
+                        <option value="zh">🇨🇳 Chinese (ចិន)</option>
                     </select>
                 </div>
 
-                <!-- GEMINI KEY -->
-                <div class="p-2.5 rounded-xl bg-[#081222] border border-[#152a46] space-y-1">
-                    <label class="block text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
-                        <i class="fa-solid fa-key text-amber-400"></i> Gemini API Key (AIza...):
+                <div>
+                    <label class="block text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-microchip text-rose-400"></i>
+                        <span>AI Transcribe & Translation Engine</span>
                     </label>
-                    <input type="password" id="cloudKeyInput" placeholder="បញ្ចូល Gemini API Key"
-                        class="w-full px-2.5 py-1.5 rounded-lg bg-[#050b18] border border-[#162d4e] text-slate-100 mono text-xs focus:border-cyan-400 focus:outline-none" />
+                    <select id="aiModelSelect"
+                        class="w-full px-2.5 py-2 rounded-lg studio-select text-xs cursor-pointer font-medium">
+                        <option value="gemini">💎 Gemini Flash (Free API - ឆ្លាត & ត្រូវតួបំផុត)</option>
+                        <option value="mwapi">⚡ MWAPI Cloud (OpenAI GPT-4o-mini)</option>
+                        <option value="local">💻 Direct Auto-Translator (Local Fallback)</option>
+                    </select>
                 </div>
 
-                <!-- KIRI TTS KEY -->
-                <div
-                    class="p-3 rounded-2xl bg-gradient-to-br from-[#0a182c] via-[#071322] to-[#040c17] border border-cyan-400/50 shadow-xl glow-cyan space-y-1.5">
-                    <label class="text-[11px] font-extrabold text-cyan-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-microphone-lines animate-pulse text-cyan-400"></i> Kiri TTS API Key
-                        (សំឡេងខ្មែរ)
+                <div id="apiKeyContainer">
+                    <label id="apiKeyLabel" class="block text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-key text-amber-400"></i>
+                        <span id="apiKeyTitle">Gemini API Key (AIza...):</span>
                     </label>
-                    <input type="password" id="kiriApiKeyInput" placeholder="បញ្ចូល Kiri TTS API Key"
-                        class="w-full px-2.5 py-1.5 rounded-lg bg-[#040813] border border-cyan-500/40 text-cyan-100 placeholder-slate-600 focus:outline-none focus:border-cyan-300 mono text-xs" />
+                    <input type="password" id="cloudKeyInput" placeholder="បញ្ចូល Google Gemini Flash API Key"
+                        class="w-full px-2.5 py-2 rounded-lg bg-[#050a14] border border-[#14233a] text-slate-200 font-mono text-[11px] focus:outline-none focus:border-[#0284c7]" />
                 </div>
 
-                <!-- DUB VOLUME -->
-                <div class="p-2.5 rounded-xl bg-[#081222] border border-[#152a46] space-y-1.5">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="font-bold text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-volume-high text-cyan-400"></i> សំឡេងខ្មែរ (Dub)
-                        </span>
-                        <span id="dubVolumeVal" class="text-cyan-400 font-extrabold mono">220%</span>
+                <div class="p-3 rounded-xl bg-[#08111f] border border-[#14233a]">
+                    <label class="block text-xs font-semibold text-cyan-300 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-microphone-lines text-cyan-400"></i>
+                        <span>Kiri TTS API Key (សំឡេងខ្មែរធម្មជាតិ)</span>
+                    </label>
+                    <input type="password" id="kiriApiKeyInput" placeholder="បញ្ចូល Kiri TTS API Key (ឧ. kiri_...)"
+                        class="w-full px-2.5 py-1.5 text-xs bg-[#050a14] border border-[#1b2f4d] rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 font-mono" />
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-users text-indigo-400"></i>
+                        <span>សំឡេងតួអង្គ (Speaker Mode)</span>
+                    </label>
+                    <select id="speakerModeSelect"
+                        class="w-full px-2.5 py-2 rounded-lg studio-select text-xs cursor-pointer">
+                        <option value="auto">🎭 Auto (AI ឆ្លាស់ ប្រុស/ស្រី តាមបរិបទ)</option>
+                        <option value="male">👨‍💼 ប្រុសសុទ្ធ (ពិសិដ្ឋ)</option>
+                        <option value="female">👩‍‍💼 ស្រីសុទ្ធ (ស្រីមុំ)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between text-slate-400 mb-1">
+                        <span>កម្រិតសំឡេងខ្មែរ (Khmer Dub)</span>
+                        <span id="dubVolumeVal" class="text-cyan-400 font-bold">220%</span>
                     </div>
                     <input type="range" id="dubVolumeSlider" min="0.5" max="3.5" step="0.1" value="2.2"
-                        class="w-full accent-cyan-400 cursor-pointer h-1.5 bg-[#050b18] rounded-lg" />
+                        class="w-full accent-cyan-500 cursor-pointer" />
                 </div>
 
-                <!-- PROGRESS & DOWNLOAD -->
-                <div class="p-3 bg-[#081426] rounded-2xl border border-cyan-500/30 space-y-2">
-                    <div class="flex items-center justify-between text-[11px]">
-                        <span id="renderStatusText" class="text-slate-300 font-bold">ត្រៀមរួចរាល់</span>
-                        <span id="renderPercentText" class="font-extrabold text-cyan-300 mono">0%</span>
+                <!-- TOGGLE SWITCH FOR BGM / SFX / AMBIENCE -->
+                <div class="p-3 rounded-xl bg-[#08111f] border border-[#14233a] flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-music text-cyan-400"></i> រក្សាភ្លេង BGM, SFX & Ambience
+                        </div>
+                        <div class="text-[9px] text-slate-400">បើកដើម្បីរក្សាភ្លេងកំដរ និងសំឡេង Effects (បិទ=យកតែសំឡេង
+                            Dub សុទ្ធ)</div>
                     </div>
-                    <div class="w-full bg-[#050c18] rounded-full h-2 overflow-hidden border border-[#12233f]">
+                    <input type="checkbox" id="keepBgmToggle" checked class="w-4 h-4 accent-cyan-500 cursor-pointer" />
+                </div>
+
+                <!-- PROGRESS & DOWNLOAD BUTTON -->
+                <div id="renderProgressContainer" class="p-3 bg-[#08111f] rounded-xl border border-[#14233a] space-y-2">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span id="renderStatusText" class="text-slate-400">ត្រៀមរួចរាល់</span>
+                        <span id="renderPercentText" class="font-bold text-cyan-400">0%</span>
+                    </div>
+                    <div class="w-full bg-[#121f35] rounded-full h-1.5 overflow-hidden">
                         <div id="renderProgressBar"
-                            class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 rounded-full transition-all duration-300">
+                            class="bg-gradient-to-r from-cyan-500 to-emerald-500 h-full w-0 transition-all duration-300">
                         </div>
                     </div>
                     <button id="btnDownloadDubbed" disabled
-                        class="w-full py-2 bg-emerald-600/30 text-emerald-400 border border-emerald-600/40 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed">
-                        <i class="fa-solid fa-download"></i>
-                        <span id="btnDownloadText">ទាញយកវីដេអូ</span>
+                        class="w-full py-2 bg-emerald-600/30 text-emerald-400 border border-emerald-600/30 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed">
+                        <i class="fa-solid fa-folder-arrow-down"></i>
+                        <span id="btnDownloadText">រើសកន្លែងដាក់ & ទាញយកភាគនេះ</span>
                     </button>
                 </div>
-
             </div>
+
+            <!-- TAB CONTENT 2: OVERLAYS -->
+            <div id="tabContentOverlays" class="p-3.5 space-y-3.5 text-xs pb-16 md:pb-4 hidden">
+                <div class="p-3 rounded-xl bg-[#081729] border border-emerald-500/40">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-emerald-300">Anti-Copyright Protection</div>
+                                <div class="text-[9px] text-slate-400">កម្ចាត់ Copyright 100% លើ Facebook / TikTok</div>
+                            </div>
+                        </div>
+                        <input type="checkbox" id="antiCopyrightToggle" checked
+                            class="w-4 h-4 accent-emerald-500 cursor-pointer" />
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-font text-rose-400"></i> អក្សរលើវីដេអូ (ស្ទីល & ស៊ុម - ចងចាំទីតាំង)
+                        </span>
+                        <button onclick="addNewTextBox()"
+                            class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow">
+                            <i class="fa-solid fa-plus text-[9px]"></i> ថែមអក្សរថ្មី
+                        </button>
+                    </div>
+                    <div id="textControlsList" class="space-y-2.5 pt-1"></div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-droplet text-cyan-400"></i> បឺឡឺ (Blur) បិទបាំងច្រើនកន្លែង
+                            (ចងចាំទីតាំង)
+                        </span>
+                        <button onclick="addNewBlurBox()"
+                            class="px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow">
+                            <i class="fa-solid fa-plus text-[9px]"></i> ថែម Blur ថ្មី
+                        </button>
+                    </div>
+                    <div id="blurControlsList" class="space-y-2 pt-1"></div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-[#08111f] border border-[#162842] space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-image text-amber-400"></i> Upload Logo [អូស & ពង្រីកពង្រួម]
+                        </span>
+                        <input type="checkbox" id="enableLogoCheckbox"
+                            class="w-4 h-4 accent-amber-500 cursor-pointer" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="logoFileInput"
+                            class="cursor-pointer px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold hover:bg-amber-500/30">
+                            <i class="fa-solid fa-upload"></i> រើសរូប Logo
+                        </label>
+                        <input type="file" id="logoFileInput" accept="image/*" class="hidden" />
+                        <span id="logoFileNameDisplay" class="text-[11px] text-slate-400 truncate flex-1">គ្មាន
+                            Logo</span>
+                    </div>
+                </div>
+            </div>
+
         </aside>
 
     </div>
 
-    <!-- BOTTOM MOBILE NAVIGATION TABS (បង្ហាញតែលើទូរសព្ទ) -->
-    <nav class="md:hidden h-12 bg-[#060c18] border-t border-[#12233f] grid grid-cols-3 shrink-0 z-40 text-[10px]">
-        <button onclick="switchMobileTab('episodes')" id="tabBtnEpisodes"
-            class="flex flex-col items-center justify-center text-cyan-400 font-bold gap-0.5">
-            <i class="fa-solid fa-film text-xs"></i>
-            <span>វីដេអូភាគ</span>
-        </button>
-        <button onclick="switchMobileTab('dialogues')" id="tabBtnDialogues"
-            class="flex flex-col items-center justify-center text-slate-400 font-bold gap-0.5">
-            <i class="fa-solid fa-closed-captioning text-xs"></i>
-            <span>អត្ថបទ Dub</span>
-        </button>
-        <button onclick="switchMobileTab('controls')" id="tabBtnControls"
-            class="flex flex-col items-center justify-center text-slate-400 font-bold gap-0.5">
-            <i class="fa-solid fa-sliders text-xs"></i>
-            <span>ម៉ូនីទ័រ & កំណត់</span>
-        </button>
-    </nav>
+    <!-- TOOL កាត់បំបែកភាគ MODAL UI -->
+    <div id="splitVideoModal"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#091222] border border-[#1b2f4d] rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-[#132238] pb-3">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-scissors"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-100">Tool កាត់បំបែកភាគស្វ័យប្រវត្ត</h3>
+                        <p class="text-[10px] text-slate-400">កាត់វីដេអូវែងជាភាគៗ (EP01, EP02...)</p>
+                    </div>
+                </div>
+                <button onclick="closeSplitModal()" class="text-slate-400 hover:text-rose-400 p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
 
-    <!-- JAVASCRIPT -->
+            <div class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">ជ្រើសរើសវីដេអូដែលចង់កាត់:</label>
+                    <label for="splitVideoFileInput"
+                        class="flex flex-col items-center justify-center border-2 border-dashed border-[#1c3354] hover:border-orange-500/60 rounded-xl p-3.5 cursor-pointer bg-[#050b14] transition-all">
+                        <i class="fa-solid fa-file-video text-orange-400 text-2xl mb-1.5"></i>
+                        <span id="splitFileNameDisplay"
+                            class="font-semibold text-slate-300 text-xs truncate max-w-xs">ចុចទីនេះដើម្បីជ្រើសរើសវីដេអូ</span>
+                        <span class="text-[10px] text-slate-500 mt-0.5">គាំទ្រ MP4, MKV, MOV</span>
+                    </label>
+                    <input type="file" id="splitVideoFileInput" accept="video/*" class="hidden" />
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1">ដាក់ឈ្មោះរឿង (ចំណងជើងភាគ):</label>
+                    <input type="text" id="customSeriesTitle"
+                        placeholder="ឧ. រឿងមហាសេដ្ឋីក្លែងខ្លួន (ទុកទទេ=យកឈ្មោះដើម)"
+                        class="w-full bg-[#050a14] border border-[#162740] rounded-lg p-2 text-slate-200 text-xs focus:outline-none focus:border-orange-500 placeholder-slate-600" />
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1.5">កំណត់រយៈពេលក្នុងមួយភាគ (គិតជានាទី):</label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button type="button" onclick="setSplitMinutesPreset(1)"
+                            class="p-2 rounded-lg bg-[#060c18] border border-[#162740] text-center hover:border-orange-500 text-slate-300 font-bold text-xs">1
+                            នាទី</button>
+                        <button type="button" onclick="setSplitMinutesPreset(2)"
+                            class="p-2 rounded-lg bg-[#060c18] border border-[#162740] text-center hover:border-orange-500 text-slate-300 font-bold text-xs">2
+                            នាទី</button>
+                        <button type="button" onclick="setSplitMinutesPreset(3)" id="btnPreset3Min"
+                            class="p-2 rounded-lg bg-orange-950/40 border border-orange-500 text-center text-orange-300 font-bold text-xs">3
+                            នាទី</button>
+                        <button type="button" onclick="setSplitMinutesPreset(5)"
+                            class="p-2 rounded-lg bg-[#060c18] border border-[#162740] text-center hover:border-orange-500 text-slate-300 font-bold text-xs">5
+                            នាទី</button>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-slate-400 text-xs">ឬវាយចំនួននាទីផ្ទាល់:</span>
+                        <input type="number" step="0.5" id="customSplitMinutes" value="3"
+                            class="w-24 bg-[#050a14] border border-[#162740] rounded-lg p-1.5 text-center text-orange-300 font-mono font-bold focus:border-orange-500 text-xs" />
+                        <span class="text-slate-400 text-xs">នាទី</span>
+                    </div>
+                </div>
+
+                <div id="splitProgressArea" class="hidden space-y-1.5 pt-1">
+                    <div class="flex justify-between text-[11px]">
+                        <span id="splitStatusText"
+                            class="text-orange-400 animate-pulse font-medium">កំពុងកាត់បំបែកភាគ...</span>
+                    </div>
+                    <div class="w-full bg-[#121f35] rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full w-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-[#132238] flex flex-col gap-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btnSaveToFolder" onclick="executeSplitVideo('save_only')"
+                        class="py-2.5 px-3 bg-[#0c1a2d] hover:bg-[#142944] text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer">
+                        <i class="fa-solid fa-folder-arrow-down text-sm"></i>
+                        <span>Save ទុកក្នុង Folder</span>
+                    </button>
+
+                    <button id="btnSendToDubbing" onclick="executeSplitVideo('dubbing')"
+                        class="py-2.5 px-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-orange-950/40 transition-all cursor-pointer">
+                        <i class="fa-solid fa-microphone-lines text-sm"></i>
+                        <span>បញ្ចូលទៅ Dubbing</span>
+                    </button>
+                </div>
+                <button onclick="closeSplitModal()"
+                    class="w-full py-1 text-slate-500 hover:text-slate-300 text-[11px] font-medium text-center">បិទផ្ទាំងនេះ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYWALL MODAL 1: TOOL កាត់បំបែកភាគ -->
+    <div id="splitPaywallModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-[#0b1322] border border-orange-500/50 rounded-2xl w-full max-w-md p-5 space-y-3.5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-[#14233a] pb-2.5">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-100">ជាវសិទ្ធិប្រើប្រាស់ Tool កាត់បំបែកភាគ</h3>
+                        <p class="text-[10px] text-slate-400">សូមបង់ប្រាក់ & Upload វិក្កយបត្រដើម្បី Admin ពិនិត្យ</p>
+                    </div>
+                </div>
+                <button onclick="closeSplitPaywall()" class="text-slate-400 hover:text-rose-400 p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-xs">
+                <div id="planSplitMonth" onclick="selectSplitPlan('month')"
+                    class="p-3 rounded-xl border-2 border-orange-500 bg-orange-950/20 cursor-pointer flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="font-bold text-slate-200">ប្រើបាន ១ ខែ</div>
+                        <div class="text-[9px] text-slate-400">ផុតកំណត់ទិញម្តងទៀត</div>
+                    </div>
+                    <div class="mt-2 text-lg font-black text-orange-400 font-mono">1.50$ <span
+                            class="text-xs text-slate-400 font-normal">/ខែ</span></div>
+                </div>
+
+                <div id="planSplitLifetime" onclick="selectSplitPlan('lifetime')"
+                    class="p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-orange-500/60 cursor-pointer flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                            <span>មួយជីវិត</span>
+                            <span class="bg-amber-500/20 text-amber-300 text-[9px] px-1 rounded font-bold">PRO</span>
+                        </div>
+                        <div class="text-[9px] text-slate-400">ទិញម្ដងប្រើជារៀងរហូត</div>
+                    </div>
+                    <div class="mt-2 text-lg font-black text-amber-400 font-mono">15.00$ <span
+                            class="text-xs text-slate-400 font-normal">/Lifetime</span></div>
+                </div>
+            </div>
+
+            <div
+                class="p-3 bg-[#060b14] border border-[#14233a] rounded-xl flex flex-col items-center justify-center gap-2">
+                <div
+                    class="w-48 h-64 bg-white p-2 rounded-xl flex flex-col items-center justify-center shadow-lg overflow-hidden border">
+                    <img id="splitQrImage" src="" class="w-full h-full object-contain" alt="KHQR Payment" />
+                </div>
+                <p class="text-[11px] text-slate-300 text-center font-medium">
+                    ស្កេនបង់ប្រាក់តាម Bakong / KHQR ទៅកាន់ <strong class="text-white">NORN CHAN BOREN</strong>
+                </p>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="block text-slate-300 text-xs font-semibold">ជ្រើសរើសរូបថតវិក្កយបត្រ
+                    (បង្កាន់ដៃបាញ់លុយ):</label>
+                <label for="splitReceiptInput"
+                    class="flex items-center justify-center gap-2 border-2 border-dashed border-[#1c3354] hover:border-orange-500/60 rounded-xl p-2.5 cursor-pointer bg-[#050b14] text-xs">
+                    <i class="fa-solid fa-camera text-orange-400"></i>
+                    <span id="splitReceiptNameDisplay"
+                        class="text-slate-300 truncate max-w-xs font-medium">ចុចទីនេះដើម្បី Upload រូបវិក្កយបត្រ</span>
+                </label>
+                <input type="file" id="splitReceiptInput" accept="image/*" class="hidden" />
+            </div>
+
+            <div id="splitWaitNotice"
+                class="hidden p-3 bg-amber-950/40 border border-amber-500/50 rounded-xl text-center space-y-1">
+                <div class="text-amber-300 text-xs font-bold animate-pulse">វិក្កយបត្របានផ្ញើទៅ Telegram Admin រួចហើយ!
+                    កំពុងរង់ចាំ Approve...</div>
+                <p class="text-[10px] text-slate-400">ពេល Admin ពិនិត្យឃើញត្រឹមត្រូវ និងចុច Approve
+                    ផ្ទាំងនេះនឹងដោះសោរភ្លាមៗ!</p>
+            </div>
+
+            <div class="pt-1">
+                <button id="btnSubmitSplitReceipt" onclick="submitSplitPaymentWithReceipt()"
+                    class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-950/40 cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-telegram text-sm"></i>
+                    <span>ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYWALL MODAL 2: FULL STUDIO -->
+    <div id="studioPaywallModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-[#0b1322] border border-cyan-500/50 rounded-2xl w-full max-w-md p-5 space-y-3.5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-[#14233a] pb-2.5">
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-base font-bold">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-100">ជាវសិទ្ធិប្រើប្រាស់ Full Studio Dubbing</h3>
+                        <p class="text-[10px] text-slate-400">សូមបង់ប្រាក់ & Upload វិក្កយបត្រដើម្បី Admin ពិនិត្យ</p>
+                    </div>
+                </div>
+                <button onclick="closeStudioPaywall()" class="text-slate-400 hover:text-rose-400 p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-xs">
+                <div id="planStudioMonth" onclick="selectStudioPlan('month')"
+                    class="p-3 rounded-xl border-2 border-cyan-500 bg-cyan-950/20 cursor-pointer flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="font-bold text-slate-200">ប្រើបាន ១ ខែ</div>
+                        <div class="text-[9px] text-slate-400">ផុតកំណត់ទិញម្តងទៀត</div>
+                    </div>
+                    <div class="mt-2 text-lg font-black text-cyan-400 font-mono">5.00$ <span
+                            class="text-xs text-slate-400 font-normal">/ខែ</span></div>
+                </div>
+
+                <div id="planStudioLifetime" onclick="selectStudioPlan('lifetime')"
+                    class="p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-cyan-500/60 cursor-pointer flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                            <span>មួយជីវិត</span>
+                            <span class="bg-cyan-500/20 text-cyan-300 text-[9px] px-1 rounded font-bold">LIFETIME</span>
+                        </div>
+                        <div class="text-[9px] text-slate-400">ទិញម្តងប្រើបានមួយជីវិត</div>
+                    </div>
+                    <div class="mt-2 text-lg font-black text-emerald-400 font-mono">49.99$ <span
+                            class="text-xs text-slate-400 font-normal">/1 ជីវិត</span></div>
+                </div>
+            </div>
+
+            <div
+                class="p-3 bg-[#060b14] border border-[#14233a] rounded-xl flex flex-col items-center justify-center gap-2">
+                <div
+                    class="w-48 h-64 bg-white p-2 rounded-xl flex flex-col items-center justify-center shadow-lg overflow-hidden border">
+                    <img id="studioQrImage" src="" class="w-full h-full object-contain" alt="KHQR Payment" />
+                </div>
+                <p class="text-[11px] text-slate-300 text-center font-medium">
+                    ស្កេនបង់ប្រាក់តាម Bakong / KHQR ទៅកាន់ <strong class="text-white">NORN CHAN BOREN</strong>
+                </p>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="block text-slate-300 text-xs font-semibold">ជ្រើសរើសរូបថតវិក្កយបត្រ
+                    (បង្កាន់ដៃបាញ់លុយ):</label>
+                <label for="studioReceiptInput"
+                    class="flex items-center justify-center gap-2 border-2 border-dashed border-[#1c3354] hover:border-cyan-500/60 rounded-xl p-2.5 cursor-pointer bg-[#050b14] text-xs">
+                    <i class="fa-solid fa-camera text-cyan-400"></i>
+                    <span id="studioReceiptNameDisplay"
+                        class="text-slate-300 truncate max-w-xs font-medium">ចុចទីនេះដើម្បី Upload រូបវិក្កយបត្រ</span>
+                </label>
+                <input type="file" id="studioReceiptInput" accept="image/*" class="hidden" />
+            </div>
+
+            <div id="studioWaitNotice"
+                class="hidden p-3 bg-cyan-950/40 border border-cyan-500/50 rounded-xl text-center space-y-1">
+                <div class="text-cyan-300 text-xs font-bold animate-pulse">វិក្កយបត្របានផ្ញើទៅ Telegram Admin រួចហើយ!
+                    កំពុងរង់ចាំ Approve...</div>
+                <p class="text-[10px] text-slate-400">ពេល Admin ពិនិត្យឃើញត្រឹមត្រូវ និងចុច Approve ផ្ទាំង Studio
+                    នឹងដោះសោរស្វ័យប្រវត្តិ!</p>
+            </div>
+
+            <div class="pt-1">
+                <button id="btnSubmitStudioReceipt" onclick="submitStudioPaymentWithReceipt()"
+                    class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-950/40 cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-telegram text-sm"></i>
+                    <span>ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         let episodesData = {};
         let activeEpisodeId = null;
         let pollInterval = null;
+        let uploadedLogoFileName = "";
 
-        let featureState = { preset: 'original', demucs: false };
+        // State Variables - ចងចាំទីតាំង Sticky ក្នុង LocalStorage
+        let savedTexts = localStorage.getItem('khmerdub_saved_text_items');
+        let textItemsData = savedTexts ? JSON.parse(savedTexts) : [];
+
+        let savedBlurs = localStorage.getItem('khmerdub_saved_blur_items');
+        let blurItemsData = savedBlurs ? JSON.parse(savedBlurs) : [];
+
+        let savedLogoConfig = localStorage.getItem('khmerdub_saved_logo_config');
+        let logoConfigData = savedLogoConfig ? JSON.parse(savedLogoConfig) : { enabled: false, x: '15%', y: '15%', w: '90px', h: '90px' };
+
+        const KHQR_STRINGS = {
+            split_month: "00020101021229300012bakong@abaa01100000000000520459995311684000101.505802KH5915NORN CHAN BOREN6010Phnom Penh6304C1C4",
+            split_lifetime: "00020101021229300012bakong@abaa01100000000000520459995311684000115.005802KH5915NORN CHAN BOREN6010Phnom Penh63045E1B",
+            studio_month: "00020101021229300012bakong@abaa0110000000000052045999531168400005.005802KH5915NORN CHAN BOREN6010Phnom Penh6304F2F1",
+            studio_lifetime: "00020101021229300012bakong@abaa0110000000000052045999531168400049.995802KH5915NORN CHAN BOREN6010Phnom Penh6304AC50"
+        };
+
+        function getKhqrUrl(khqrString) {
+            return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(khqrString)}`;
+        }
+
+        let splitPollingInterval = null;
+        let studioPollingInterval = null;
+
+        async function checkSubscriptionFromServer(serviceKey) {
+            try {
+                const res = await fetch(`/api/check-subscription-status?service_key=${serviceKey}`);
+                return await res.json();
+            } catch (e) {
+                return { active: false };
+            }
+        }
+
+        async function updateLicenseBadgesUI() {
+            const splitSub = await checkSubscriptionFromServer('splitter');
+            const studioSub = await checkSubscriptionFromServer('studio');
+
+            const splitBadge = document.getElementById('splitBadgeStatus');
+            if (splitSub.active) {
+                splitBadge.innerText = splitSub.type === 'lifetime' ? 'LIFETIME' : splitSub.days_left;
+                splitBadge.className = "bg-emerald-500/30 text-emerald-300 text-[9px] px-1.5 py-0.2 rounded font-bold";
+            } else {
+                splitBadge.innerText = '1.5$';
+                splitBadge.className = "bg-orange-500/30 text-orange-300 text-[9px] px-1.5 py-0.2 rounded font-bold";
+            }
+
+            const vipBadge = document.getElementById('vipStatusBadge');
+            const studioLockoutOverlay = document.getElementById('studioLockoutOverlay');
+
+            if (studioSub.active) {
+                vipBadge.innerText = studioSub.type === 'lifetime' ? 'STUDIO LIFETIME' : `VIP (${studioSub.days_left})`;
+                vipBadge.className = "hidden sm:inline text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold cursor-pointer";
+                studioLockoutOverlay.classList.add('hidden');
+            } else {
+                vipBadge.innerHTML = '<i class="fa-solid fa-lock mr-1"></i>LOCKED (ទិញសិទ្ធិប្រើប្រាស់)';
+                vipBadge.className = "hidden sm:inline text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2 py-0.5 rounded font-bold cursor-pointer";
+                studioLockoutOverlay.classList.remove('hidden');
+            }
+        }
+
+        window.handleActionWithStudioCheck = async (actionType) => {
+            const sub = await checkSubscriptionFromServer('studio');
+            if (!sub.active) {
+                openFullStudioPaywall();
+                return;
+            }
+
+            if (actionType === 'upload') {
+                document.getElementById('batchFileInput').click();
+            } else if (actionType === 'transcribe') {
+                const epIds = Object.keys(episodesData);
+                if (!epIds.length) return alert("គ្មានវីដេអូសម្រាប់ Transcribe ទេ!");
+                await runTranscribeAllSequentially();
+                alert("បាន Transcribe គ្រប់ភាគទាំងអស់រួចរាល់ ១០០%!");
+            }
+        };
+
+        let currentSplitPlan = 'month';
+        window.selectSplitPlan = (plan) => {
+            currentSplitPlan = plan;
+            const bMonth = document.getElementById('planSplitMonth');
+            const bLife = document.getElementById('planSplitLifetime');
+            const qrImg = document.getElementById('splitQrImage');
+
+            if (plan === 'month') {
+                bMonth.className = "p-3 rounded-xl border-2 border-orange-500 bg-orange-950/20 cursor-pointer flex flex-col justify-between transition-all";
+                bLife.className = "p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-orange-500/60 cursor-pointer flex flex-col justify-between transition-all";
+                qrImg.src = getKhqrUrl(KHQR_STRINGS.split_month);
+            } else {
+                bLife.className = "p-3 rounded-xl border-2 border-amber-500 bg-amber-950/20 cursor-pointer flex flex-col justify-between transition-all";
+                bMonth.className = "p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-orange-500/60 cursor-pointer flex flex-col justify-between transition-all";
+                qrImg.src = getKhqrUrl(KHQR_STRINGS.split_lifetime);
+            }
+        };
+
+        const splitReceiptInput = document.getElementById('splitReceiptInput');
+        const splitReceiptNameDisplay = document.getElementById('splitReceiptNameDisplay');
+        splitReceiptInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                splitReceiptNameDisplay.innerText = e.target.files[0].name;
+            }
+        });
+
+        window.checkAndOpenSplitTool = async () => {
+            const sub = await checkSubscriptionFromServer('splitter');
+            if (!sub.active) {
+                // Reset Form & Button State មុនពេលបើក Modal
+                const btn = document.getElementById('btnSubmitSplitReceipt');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-brands fa-telegram text-sm mr-1"></i> <span>ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ</span>`;
+                }
+                const waitNotice = document.getElementById('splitWaitNotice');
+                if (waitNotice) waitNotice.classList.add('hidden');
+
+                const nameDisp = document.getElementById('splitReceiptNameDisplay');
+                if (nameDisp) nameDisp.innerText = "ចុចទីនេះដើម្បី Upload រូបវិក្កយបត្រ";
+                const fileInput = document.getElementById('splitReceiptInput');
+                if (fileInput) fileInput.value = '';
+
+                selectSplitPlan(currentSplitPlan);
+                document.getElementById('splitPaywallModal').classList.remove('hidden');
+            } else {
+                document.getElementById('splitVideoModal').classList.remove('hidden');
+            }
+        };
+
+        window.closeSplitPaywall = () => {
+            document.getElementById('splitPaywallModal').classList.add('hidden');
+            if (splitPollingInterval) clearInterval(splitPollingInterval);
+        };
+
+        window.submitSplitPaymentWithReceipt = async () => {
+            const receiptFile = splitReceiptInput.files[0];
+            if (!receiptFile) return alert("សូមជ្រើសរើសរូបថតវិក្កយបត្របង់ប្រាក់ជាមុនសិន!");
+
+            const formData = new FormData();
+            formData.append("receipt", receiptFile);
+            formData.append("service_key", "splitter");
+            formData.append("plan_type", currentSplitPlan);
+
+            const btn = document.getElementById('btnSubmitSplitReceipt');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> កំពុងផ្ញើវិក្កយបត្រ...`;
+
+            try {
+                await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                document.getElementById('splitWaitNotice').classList.remove('hidden');
+                btn.innerHTML = `✅ បានផ្ញើវិក្កយបត្ររួចរាល់`;
+
+                if (splitPollingInterval) clearInterval(splitPollingInterval);
+                splitPollingInterval = setInterval(async () => {
+                    const check = await checkSubscriptionFromServer('splitter');
+                    if (check.active) {
+                        clearInterval(splitPollingInterval);
+                        alert("🎉 Admin បានពិនិត្យវិក្កយបត្រ និង Approve ជោគជ័យ! Tool កាត់បំបែកភាគត្រូវបានបើកដំណើរការ!");
+                        closeSplitPaywall();
+                        updateLicenseBadgesUI();
+                        document.getElementById('splitVideoModal').classList.remove('hidden');
+                    }
+                }, 2000);
+            } catch (err) {
+                alert("ផ្ញើវិក្កយបត្របរាជ័យ: " + err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ`;
+            }
+        };
+
+        let currentStudioPlan = 'month';
+        window.selectStudioPlan = (plan) => {
+            currentStudioPlan = plan;
+            const bMonth = document.getElementById('planStudioMonth');
+            const bLife = document.getElementById('planStudioLifetime');
+            const qrImg = document.getElementById('studioQrImage');
+
+            if (plan === 'month') {
+                bMonth.className = "p-3 rounded-xl border-2 border-cyan-500 bg-cyan-950/20 cursor-pointer flex flex-col justify-between transition-all";
+                bLife.className = "p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-cyan-500/60 cursor-pointer flex flex-col justify-between transition-all";
+                qrImg.src = getKhqrUrl(KHQR_STRINGS.studio_month);
+            } else {
+                bLife.className = "p-3 rounded-xl border-2 border-emerald-500 bg-emerald-950/20 cursor-pointer flex flex-col justify-between transition-all";
+                bMonth.className = "p-3 rounded-xl border-2 border-[#1a2d48] bg-[#070e1a] hover:border-cyan-500/60 cursor-pointer flex flex-col justify-between transition-all";
+                qrImg.src = getKhqrUrl(KHQR_STRINGS.studio_lifetime);
+            }
+        };
+
+        const studioReceiptInput = document.getElementById('studioReceiptInput');
+        const studioReceiptNameDisplay = document.getElementById('studioReceiptNameDisplay');
+        studioReceiptInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                studioReceiptNameDisplay.innerText = e.target.files[0].name;
+            }
+        });
+
+        window.openFullStudioPaywall = () => {
+            // Reset Form & Button State មុនពេលបើក Modal
+            const btn = document.getElementById('btnSubmitStudioReceipt');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-brands fa-telegram text-sm mr-1"></i> <span>ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ</span>`;
+            }
+            const waitNotice = document.getElementById('studioWaitNotice');
+            if (waitNotice) waitNotice.classList.add('hidden');
+
+            const nameDisp = document.getElementById('studioReceiptNameDisplay');
+            if (nameDisp) nameDisp.innerText = "ចុចទីនេះដើម្បី Upload រូបវិក្កយបត្រ";
+            const fileInput = document.getElementById('studioReceiptInput');
+            if (fileInput) fileInput.value = '';
+
+            selectStudioPlan(currentStudioPlan);
+            document.getElementById('studioPaywallModal').classList.remove('hidden');
+        };
+
+        window.closeStudioPaywall = () => {
+            document.getElementById('studioPaywallModal').classList.add('hidden');
+            if (studioPollingInterval) clearInterval(studioPollingInterval);
+        };
+
+        window.submitStudioPaymentWithReceipt = async () => {
+            const receiptFile = studioReceiptInput.files[0];
+            if (!receiptFile) return alert("សូមជ្រើសរើសរូបថតវិក្កយបត្របង់ប្រាក់ជាមុនសិន!");
+
+            const formData = new FormData();
+            formData.append("receipt", receiptFile);
+            formData.append("service_key", "studio");
+            formData.append("plan_type", currentStudioPlan);
+
+            const btn = document.getElementById('btnSubmitStudioReceipt');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> កំពុងផ្ញើវិក្កយបត្រ...`;
+
+            try {
+                await fetch('/api/submit-payment-receipt', { method: 'POST', body: formData });
+                document.getElementById('studioWaitNotice').classList.remove('hidden');
+                btn.innerHTML = `✅ បានផ្ញើវិក្កយបត្ររួចរាល់`;
+
+                if (studioPollingInterval) clearInterval(studioPollingInterval);
+                studioPollingInterval = setInterval(async () => {
+                    const check = await checkSubscriptionFromServer('studio');
+                    if (check.active) {
+                        clearInterval(studioPollingInterval);
+                        alert("🎉 Admin បានពិនិត្យវិក្កយបត្រ និង Approve ជោគជ័យ! KHMERDUB STUDIO ត្រូវបានដោះសោរ!");
+                        closeStudioPaywall();
+                        updateLicenseBadgesUI();
+                    }
+                }, 2000);
+            } catch (err) {
+                alert("ផ្ញើវិក្កយបត្របរាជ័យ: " + err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឥឡូវនេះ`;
+            }
+        };
+
+        window.openSplitModal = () => checkAndOpenSplitTool();
+        window.closeSplitModal = () => document.getElementById('splitVideoModal').classList.add('hidden');
+
+        window.setSplitMinutesPreset = (mins) => {
+            document.getElementById('customSplitMinutes').value = mins;
+        };
+
+        const splitVideoFileInput = document.getElementById('splitVideoFileInput');
+        const splitFileNameDisplay = document.getElementById('splitFileNameDisplay');
+        const customSeriesTitle = document.getElementById('customSeriesTitle');
+
+        splitVideoFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                splitFileNameDisplay.innerText = file.name;
+                if (!customSeriesTitle.value.trim()) {
+                    customSeriesTitle.value = file.name.replace(/\.[^/.]+$/, "");
+                }
+            }
+        });
+
+        window.executeSplitVideo = async (actionType) => {
+            const sub = await checkSubscriptionFromServer('splitter');
+            if (!sub.active) {
+                closeSplitModal();
+                document.getElementById('splitPaywallModal').classList.remove('hidden');
+                return;
+            }
+
+            const file = splitVideoFileInput.files[0];
+            if (!file) return alert("សូមជ្រើសរើសវីដេអូសម្រាប់កាត់!");
+
+            const minutes = parseFloat(document.getElementById('customSplitMinutes').value) || 3.0;
+            const title = customSeriesTitle.value.trim();
+            const progressArea = document.getElementById('splitProgressArea');
+            const btnSave = document.getElementById('btnSaveToFolder');
+            const btnDub = document.getElementById('btnSendToDubbing');
+
+            progressArea.classList.remove('hidden');
+            btnSave.disabled = true;
+            btnDub.disabled = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("custom_title", title);
+            formData.append("split_minutes", minutes);
+            formData.append("action_type", actionType);
+
+            try {
+                const res = await fetch('/api/split-video', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    if (actionType === 'dubbing') {
+                        alert(`បានកាត់បំបែកជា ${data.parts_count} ភាគ និងបញ្ចូលទៅកាន់ Studio ជោគជ័យ!`);
+                        closeSplitModal();
+                        await loadEpisodes();
+                    } else {
+                        alert(`បានកាត់ជា ${data.parts_count} ភាគរួចរាល់! សូមជ្រើសរើស Folder ដើម្បីរក្សាទុកវីដេអូទាំងអស់...`);
+                        closeSplitModal();
+                        await batchDownloadUrlsToFolder(data.parts.map(p => ({ url: p.download_url, filename: p.filename })));
+                    }
+                } else {
+                    alert("កាត់វីដេអូបរាជ័យ: " + (data.detail || "Error"));
+                }
+            } catch (err) {
+                alert("កាត់វីដេអូបរាជ័យ: " + err);
+            } finally {
+                progressArea.classList.add('hidden');
+                btnSave.disabled = false;
+                btnDub.disabled = false;
+            }
+        };
+
+        async function batchDownloadUrlsToFolder(items) {
+            if (!items || items.length === 0) return alert("មិនទាន់មានវីដេអូណាដែល Dub ចប់សម្រាប់ទាញយកទេ!");
+
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    let count = 0;
+                    for (const item of items) {
+                        try {
+                            const res = await fetch(item.url);
+                            const blob = await res.blob();
+                            const fileHandle = await dirHandle.getFileHandle(item.filename, { create: true });
+                            const writable = await fileHandle.createWritable();
+                            await writable.write(blob);
+                            await writable.close();
+                            count++;
+                        } catch (fileErr) {
+                            console.error(`Error saving ${item.filename}:`, fileErr);
+                        }
+                    }
+                    alert(`🎉 បានរក្សាទុកវីដេអូចំនួន ${count} ភាគចូលទៅក្នុង Folder របស់អ្នកជោគជ័យ!`);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        alert("មិនអាចចូលទៅកាន់ Folder បានទេ: " + err);
+                    }
+                }
+            } else {
+                for (const item of items) {
+                    await triggerCustomFolderDownload(item.url, item.filename);
+                    await new Promise(r => setTimeout(r, 600));
+                }
+            }
+        }
+
+        window.downloadAllCompletedEpisodesToFolder = async () => {
+            const completedList = [];
+            Object.values(episodesData).forEach(ep => {
+                if (ep.status === 'completed' && ep.output_url) {
+                    completedList.push({
+                        url: ep.output_url,
+                        filename: `${ep.code}_${ep.filename}_Dubbed.mp4`
+                    });
+                }
+            });
+
+            if (completedList.length === 0) {
+                return alert("សូមរង់ចាំឱ្យវីដេអូ Dubbing ចប់យ៉ាងហោចណាស់ ១ ភាគសិន!");
+            }
+
+            await batchDownloadUrlsToFolder(completedList);
+        };
 
         const player = document.getElementById('studioVideoPlayer');
+        const container = document.getElementById('monitorContainer');
+        const overlayCanvas = document.getElementById('overlayCanvas');
+        const aiModelSelect = document.getElementById('aiModelSelect');
+        const apiKeyTitle = document.getElementById('apiKeyTitle');
         const cloudKeyInput = document.getElementById('cloudKeyInput');
+        const apiKeyContainer = document.getElementById('apiKeyContainer');
+        const activeEngineText = document.getElementById('activeEngineText');
+        const videoResolutionSelect = document.getElementById('videoResolutionSelect');
+        const antiCopyrightToggle = document.getElementById('antiCopyrightToggle');
+        const keepBgmToggle = document.getElementById('keepBgmToggle');
+
+        const dragLogoBox = document.getElementById('dragLogoBox');
+        const canvasLogoImg = document.getElementById('canvasLogoImg');
+        const enableLogoCheckbox = document.getElementById('enableLogoCheckbox');
+        const logoFileInput = document.getElementById('logoFileInput');
+        const logoFileNameDisplay = document.getElementById('logoFileNameDisplay');
+
+        const textControlsList = document.getElementById('textControlsList');
+        const blurControlsList = document.getElementById('blurControlsList');
+
         const kiriApiKeyInput = document.getElementById('kiriApiKeyInput');
         const dubVolumeSlider = document.getElementById('dubVolumeSlider');
         const dubVolumeVal = document.getElementById('dubVolumeVal');
         const btnDownloadDubbed = document.getElementById('btnDownloadDubbed');
-        const btnRenderCurrentText = document.getElementById('btnRenderCurrentText');
+        const btnTimelinePlay = document.getElementById('btnTimelinePlay');
+        const btnTimelinePlayIcon = document.getElementById('btnTimelinePlayIcon');
+        const timelineTimeDisplay = document.getElementById('timelineTimeDisplay');
 
-        cloudKeyInput.value = localStorage.getItem('gemini_cloud_key') || '';
-        cloudKeyInput.addEventListener('input', (e) => localStorage.setItem('gemini_cloud_key', e.target.value.trim()));
+        window.switchControlTab = (tab) => {
+            const tabAudio = document.getElementById('tabContentAudio');
+            const tabOverlays = document.getElementById('tabContentOverlays');
+            const btnAudio = document.getElementById('tabBtnAudio');
+            const btnOverlays = document.getElementById('tabBtnOverlays');
 
-        kiriApiKeyInput.value = localStorage.getItem('kiri_api_key') || '';
-        kiriApiKeyInput.addEventListener('input', (e) => localStorage.setItem('kiri_api_key', e.target.value.trim()));
+            if (tab === 'audio') {
+                tabAudio.classList.remove('hidden');
+                tabOverlays.classList.add('hidden');
+                btnAudio.className = "flex-1 py-2.5 text-xs font-bold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5 transition-all";
+                btnOverlays.className = "flex-1 py-2.5 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all";
+            } else {
+                tabAudio.classList.add('hidden');
+                tabOverlays.classList.remove('hidden');
+                btnOverlays.className = "flex-1 py-2.5 text-xs font-bold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5 transition-all";
+                btnAudio.className = "flex-1 py-2.5 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all";
+            }
+        };
 
-        dubVolumeSlider.addEventListener('input', (e) => {
-            dubVolumeVal.innerText = `${Math.round(e.target.value * 100)}%`;
+        function saveStickyState() {
+            localStorage.setItem('khmerdub_saved_text_items', JSON.stringify(textItemsData));
+            localStorage.setItem('khmerdub_saved_blur_items', JSON.stringify(blurItemsData));
+            if (dragLogoBox) {
+                logoConfigData = {
+                    enabled: enableLogoCheckbox.checked,
+                    left: dragLogoBox.style.left,
+                    top: dragLogoBox.style.top,
+                    width: dragLogoBox.style.width,
+                    height: dragLogoBox.style.height
+                };
+                localStorage.setItem('khmerdub_saved_logo_config', JSON.stringify(logoConfigData));
+            }
+        }
+
+        function makeInteractive(el, onUpdate = null) {
+            let isDragging = false;
+            let isResizing = false;
+            let startX, startY, startLeft, startTop, startW, startH;
+
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resize-handle')) {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startW = el.offsetWidth;
+                    startH = el.offsetHeight;
+                } else {
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startLeft = el.offsetLeft;
+                    startTop = el.offsetTop;
+                }
+                e.stopPropagation();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                const cW = overlayCanvas.clientWidth;
+                const cH = overlayCanvas.clientHeight;
+                if (isDragging) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    let newL = Math.max(0, Math.min(startLeft + dx, cW - el.offsetWidth));
+                    let newT = Math.max(0, Math.min(startTop + dy, cH - el.offsetHeight));
+                    el.style.left = `${newL}px`;
+                    el.style.top = `${newT}px`;
+                } else if (isResizing) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    el.style.width = `${Math.max(30, startW + dx)}px`;
+                    el.style.height = `${Math.max(20, startH + dy)}px`;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging || isResizing) {
+                    isDragging = false;
+                    isResizing = false;
+                    if (onUpdate) onUpdate(el);
+                    saveStickyState();
+                }
+            });
+        }
+
+        function createTextBoxElement(item) {
+            const box = document.createElement('div');
+            box.id = item.id;
+            box.className = 'drag-box pointer-events-auto border-2 border-dashed border-rose-400/80 p-1 rounded';
+            box.style.top = item.top || `${15 + (textItemsData.indexOf(item) * 8)}%`;
+            box.style.left = item.left || '10%';
+            box.innerHTML = `
+        <div id="content_${item.id}" class="style-${item.style || 'gold'} text-xs truncate select-none" style="font-size: ${(item.size || 34) / 2.5}px;">${item.text || 'KHMERDUB'}</div>
+        <div class="resize-handle bg-rose-500"></div>
+      `;
+            overlayCanvas.appendChild(box);
+
+            makeInteractive(box, (el) => {
+                item.left = el.style.left;
+                item.top = el.style.top;
+            });
+        }
+
+        window.addNewTextBox = () => {
+            const id = 'text_' + Date.now();
+            const newItem = {
+                id: id,
+                text: 'KHMERDUB',
+                style: 'gold',
+                size: 34,
+                left: '10%',
+                top: `${15 + (textItemsData.length * 8)}%`
+            };
+            textItemsData.push(newItem);
+            createTextBoxElement(newItem);
+            renderTextControls();
+            saveStickyState();
+        };
+
+        function renderTextControls() {
+            textControlsList.innerHTML = '';
+            textItemsData.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'p-2.5 rounded-lg bg-[#050a14] border border-[#1b2f4d] space-y-2 text-xs';
+                div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[11px] text-rose-300">អក្សរទី #${idx + 1}</span>
+            <button onclick="removeTextBox('${item.id}')" class="text-slate-500 hover:text-rose-400 text-xs cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <input type="text" value="${item.text}" oninput="updateTextValue('${item.id}', this.value)" class="w-full bg-[#08111f] border border-[#1b2f4d] rounded p-1.5 text-xs text-slate-100 font-bold focus:border-rose-500" placeholder="បញ្ចូលអក្សរ" />
+          <div class="grid grid-cols-2 gap-2 text-[10px]">
+            <div>
+              <span class="text-slate-400">ស្ទីល & Background:</span>
+              <select onchange="updateTextStyle('${item.id}', this.value)" class="w-full bg-[#08111f] border border-[#1b2f4d] rounded p-1 text-slate-200">
+                <option value="gold" ${item.style === 'gold' ? 'selected' : ''}>✨ Cinematic Gold (មាស)</option>
+                <option value="neon" ${item.style === 'neon' ? 'selected' : ''}>⚡ Cyber Neon (ខៀវភ្លឺ)</option>
+                <option value="red_banner" ${item.style === 'red_banner' ? 'selected' : ''}>🚩 Red Banner (ផ្ទៃក្រហម)</option>
+                <option value="retro" ${item.style === 'retro' ? 'selected' : ''}>🎨 Retro Pop (លឿង/ក្រហម)</option>
+                <option value="minimal" ${item.style === 'minimal' ? 'selected' : ''}>🧊 Minimal Box (កញ្ចក់ថ្លា)</option>
+                <option value="default" ${item.style === 'default' ? 'selected' : ''}>🔴 Simple Red (ក្រហម)</option>
+              </select>
+            </div>
+            <div>
+              <span class="text-slate-400">ទំហំអក្សរ:</span>
+              <input type="number" value="${item.size}" oninput="updateTextSize('${item.id}', this.value)" class="w-full bg-[#08111f] border border-[#1b2f4d] rounded p-1 text-center font-mono" />
+            </div>
+          </div>
+        `;
+                textControlsList.appendChild(div);
+            });
+        }
+
+        window.updateTextValue = (id, val) => {
+            const it = textItemsData.find(x => x.id === id);
+            if (it) {
+                it.text = val;
+                const c = document.getElementById('content_' + id);
+                if (c) c.innerText = val || 'TEXT';
+                saveStickyState();
+            }
+        };
+
+        window.updateTextStyle = (id, st) => {
+            const it = textItemsData.find(x => x.id === id);
+            if (it) {
+                it.style = st;
+                const c = document.getElementById('content_' + id);
+                if (c) c.className = `style-${st} text-xs truncate select-none`;
+                saveStickyState();
+            }
+        };
+
+        window.updateTextSize = (id, sz) => {
+            const it = textItemsData.find(x => x.id === id);
+            if (it) {
+                it.size = parseInt(sz) || 34;
+                const c = document.getElementById('content_' + id);
+                if (c) c.style.fontSize = `${it.size / 2.5}px`;
+                saveStickyState();
+            }
+        };
+
+        window.removeTextBox = (id) => {
+            textItemsData = textItemsData.filter(x => x.id !== id);
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            renderTextControls();
+            saveStickyState();
+        };
+
+        function createBlurBoxElement(item) {
+            const box = document.createElement('div');
+            box.id = item.id;
+            box.className = 'drag-box pointer-events-auto border-2 border-dashed border-cyan-400 backdrop-blur-md bg-cyan-500/10 rounded';
+            box.style.top = item.top || `${25 + (blurItemsData.indexOf(item) * 12)}%`;
+            box.style.left = item.left || '10%';
+            box.style.width = item.width || '120px';
+            box.style.height = item.height || '45px';
+            box.innerHTML = `
+        <div class="resize-handle bg-cyan-400"></div>
+      `;
+            overlayCanvas.appendChild(box);
+
+            makeInteractive(box, (el) => {
+                item.left = el.style.left;
+                item.top = el.style.top;
+                item.width = el.style.width;
+                item.height = el.style.height;
+            });
+        }
+
+        window.addNewBlurBox = () => {
+            const id = 'blur_' + Date.now();
+            const newBlur = {
+                id: id,
+                left: '10%',
+                top: `${25 + (blurItemsData.length * 12)}%`,
+                width: '120px',
+                height: '45px'
+            };
+            blurItemsData.push(newBlur);
+            createBlurBoxElement(newBlur);
+            renderBlurControls();
+            saveStickyState();
+        };
+
+        function renderBlurControls() {
+            blurControlsList.innerHTML = '';
+            blurItemsData.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'p-2 rounded-lg bg-[#050a14] border border-[#1b2f4d] flex items-center justify-between text-xs';
+                div.innerHTML = `
+          <span class="text-[11px] text-cyan-300 font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span> ប្រអប់ Blur #${idx + 1}
+          </span>
+          <button onclick="removeBlurBox('${item.id}')" class="text-slate-500 hover:text-rose-400 text-xs cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+        `;
+                blurControlsList.appendChild(div);
+            });
+        }
+
+        window.removeBlurBox = (id) => {
+            blurItemsData = blurItemsData.filter(x => x.id !== id);
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            renderBlurControls();
+            saveStickyState();
+        };
+
+        if (textItemsData.length > 0) {
+            textItemsData.forEach(createTextBoxElement);
+            renderTextControls();
+        } else {
+            addNewTextBox();
+        }
+
+        if (blurItemsData.length > 0) {
+            blurItemsData.forEach(createBlurBoxElement);
+            renderBlurControls();
+        } else {
+            addNewBlurBox();
+        }
+
+        if (logoConfigData) {
+            dragLogoBox.style.left = logoConfigData.left || '15%';
+            dragLogoBox.style.top = logoConfigData.top || '15%';
+            dragLogoBox.style.width = logoConfigData.width || '90px';
+            dragLogoBox.style.height = logoConfigData.height || '90px';
+            if (logoConfigData.enabled) {
+                enableLogoCheckbox.checked = true;
+                dragLogoBox.classList.remove('hidden');
+            }
+        }
+        makeInteractive(dragLogoBox, () => saveStickyState());
+
+        enableLogoCheckbox.addEventListener('change', (e) => {
+            dragLogoBox.classList.toggle('hidden', !e.target.checked);
+            saveStickyState();
         });
 
-        // MOBILE TABS SWITCHER
-        function switchMobileTab(tab) {
-            const pEp = document.getElementById('panelEpisodes');
-            const pDia = document.getElementById('panelDialogues');
-            const pCtrl = document.getElementById('panelControls');
-
-            const bEp = document.getElementById('tabBtnEpisodes');
-            const bDia = document.getElementById('tabBtnDialogues');
-            const bCtrl = document.getElementById('tabBtnControls');
-
-            [pEp, pDia, pCtrl].forEach(p => p.classList.add('hidden'));
-            [bEp, bDia, bCtrl].forEach(b => {
-                b.className = "flex flex-col items-center justify-center text-slate-400 font-bold gap-0.5";
-            });
-
-            if (tab === 'episodes') {
-                pEp.classList.remove('hidden');
-                bEp.className = "flex flex-col items-center justify-center text-cyan-400 font-bold gap-0.5";
-            } else if (tab === 'dialogues') {
-                pDia.classList.remove('hidden');
-                bDia.className = "flex flex-col items-center justify-center text-cyan-400 font-bold gap-0.5";
-            } else {
-                pCtrl.classList.remove('hidden');
-                bCtrl.className = "flex flex-col items-center justify-center text-cyan-400 font-bold gap-0.5";
+        logoFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append("file", file);
+            try {
+                const res = await fetch('/api/upload-logo', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    uploadedLogoFileName = data.logo_filename;
+                    logoFileNameDisplay.innerText = file.name;
+                    canvasLogoImg.src = data.url;
+                    enableLogoCheckbox.checked = true;
+                    dragLogoBox.classList.remove('hidden');
+                    saveStickyState();
+                }
+            } catch (err) {
+                alert("Upload Logo បរាជ័យ: " + err);
             }
-        }
+        });
 
-        function applyPreset(name) {
-            featureState.preset = name;
-            ['presetTikTok', 'presetYouTube', 'presetOriginal'].forEach(id => {
-                document.getElementById(id).className = "p-2 rounded-xl bg-[#081220] border border-[#162a45] text-center";
-            });
-
-            if (name === 'tiktok') {
-                document.getElementById('presetTikTok').className = "p-2 rounded-xl bg-cyan-950/40 border border-cyan-400 text-center glow-cyan";
-                setAspectRatio('9:16');
-            } else if (name === 'youtube') {
-                document.getElementById('presetYouTube').className = "p-2 rounded-xl bg-cyan-950/40 border border-cyan-400 text-center glow-cyan";
-                setAspectRatio('16:9');
-            } else {
-                document.getElementById('presetOriginal').className = "p-2 rounded-xl bg-amber-500/20 border border-amber-500/80 text-center glow-amber";
-                setAspectRatio('16:9');
-            }
-        }
+        player.addEventListener('loadedmetadata', () => {
+            const vw = player.videoWidth || 1920;
+            const vh = player.videoHeight || 1080;
+            if (vh > vw) setAspectRatio('9:16');
+            else setAspectRatio('16:9');
+        });
 
         function setAspectRatio(ratio) {
-            const container = document.getElementById('monitorContainer');
             const b916 = document.getElementById('btnAspect916');
             const b169 = document.getElementById('btnAspect169');
             if (ratio === '9:16') {
-                container.className = "aspect-[9/16] max-h-64 mx-auto bg-black rounded-xl overflow-hidden border border-cyan-400/60 flex items-center justify-center shadow-xl";
-                b916.className = "px-2 py-0.5 rounded bg-cyan-600/30 text-cyan-300 border border-cyan-400/60";
-                b169.className = "px-2 py-0.5 rounded bg-[#0a1424] border border-cyan-900/50 text-slate-300";
+                container.className = "aspect-[9/16] max-h-60 mx-auto bg-black rounded-xl overflow-hidden border border-[#162740] flex items-center justify-center shadow-lg transition-all duration-300 relative";
+                b916.className = "px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30";
+                b169.className = "px-1.5 py-0.5 rounded bg-[#101b2d] text-slate-300";
             } else {
-                container.className = "aspect-video bg-black rounded-xl overflow-hidden border border-cyan-400/60 flex items-center justify-center shadow-xl";
-                b169.className = "px-2 py-0.5 rounded bg-cyan-600/30 text-cyan-300 border border-cyan-400/60";
-                b916.className = "px-2 py-0.5 rounded bg-[#0a1424] border border-cyan-900/50 text-slate-300";
+                container.className = "aspect-video max-h-56 mx-auto bg-black rounded-xl overflow-hidden border border-[#162740] flex items-center justify-center shadow-lg transition-all duration-300 relative";
+                b169.className = "px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30";
+                b916.className = "px-1.5 py-0.5 rounded bg-[#101b2d] text-slate-300";
             }
         }
 
-        function toggleFeature(feat) {
-            featureState[feat] = !featureState[feat];
-            const badge = document.getElementById(`${feat}Badge`);
-            badge.innerText = featureState[feat] ? "Active" : "Off";
-            badge.className = featureState[feat] ? "text-[8px] text-cyan-300 font-bold" : "text-[8px] text-slate-500 font-semibold";
+        player.addEventListener('timeupdate', () => {
+            const cur = formatTime(player.currentTime);
+            const dur = formatTime(player.duration || 0);
+            timelineTimeDisplay.innerText = `${cur} / ${dur}`;
+        });
+
+        player.addEventListener('play', () => btnTimelinePlayIcon.className = "fa-solid fa-pause text-[11px]");
+        player.addEventListener('pause', () => btnTimelinePlayIcon.className = "fa-solid fa-play text-[11px]");
+        btnTimelinePlay.addEventListener('click', () => {
+            if (player.paused) player.play();
+            else player.pause();
+        });
+
+        function formatTime(secs) {
+            if (isNaN(secs)) return "00:00.00";
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            const ms = Math.floor((secs % 1) * 100);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
         }
+
+        function updateKeyInputUI() {
+            const selectedEngine = aiModelSelect.value;
+            localStorage.setItem('selected_ai_engine', selectedEngine);
+            if (selectedEngine === 'mwapi') {
+                apiKeyContainer.style.display = 'block';
+                apiKeyTitle.innerText = "MWAPI Key (sk-...):";
+                cloudKeyInput.placeholder = "បញ្ចូល MWAPI Cloud API Key (sk-...)";
+                cloudKeyInput.value = localStorage.getItem('mwapi_cloud_key') || '';
+                if (activeEngineText) activeEngineText.innerHTML = "⚡ MWAPI Cloud (GPT-4o-mini)";
+            } else if (selectedEngine === 'gemini') {
+                apiKeyContainer.style.display = 'block';
+                apiKeyTitle.innerText = "Gemini API Key (AIza...):";
+                cloudKeyInput.placeholder = "បញ្ចូល Google Gemini Flash API Key (AIza...)";
+                cloudKeyInput.value = localStorage.getItem('gemini_cloud_key') || '';
+                if (activeEngineText) activeEngineText.innerHTML = "💎 Gemini Flash AI";
+            } else {
+                apiKeyContainer.style.display = 'none';
+                cloudKeyInput.value = '';
+                if (activeEngineText) activeEngineText.innerHTML = "💻 Direct Auto-Translator";
+            }
+        }
+
+        aiModelSelect.addEventListener('change', updateKeyInputUI);
+        cloudKeyInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (aiModelSelect.value === 'mwapi') localStorage.setItem('mwapi_cloud_key', val);
+            else if (aiModelSelect.value === 'gemini') localStorage.setItem('gemini_cloud_key', val);
+        });
+
+        const savedEngine = localStorage.getItem('selected_ai_engine') || 'gemini';
+        aiModelSelect.value = savedEngine;
+        updateKeyInputUI();
+
+        kiriApiKeyInput.value = localStorage.getItem('kiri_api_key') || '';
+        kiriApiKeyInput.addEventListener('input', (e) => localStorage.setItem('kiri_api_key', e.target.value.trim()));
+        dubVolumeSlider.addEventListener('input', (e) => dubVolumeVal.innerText = `${Math.round(e.target.value * 100)}%`);
 
         async function loadEpisodes() {
             try {
@@ -512,80 +1617,150 @@
             }
         }
 
+        async function triggerCustomFolderDownload(url, filename) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                if ('showSaveFilePicker' in window) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [{ description: 'Video File (*.mp4)', accept: { 'video/mp4': ['.mp4'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    alert(`បានរក្សាទុកវីដេអូ ${filename} ជោគជ័យ!`);
+                } else {
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error("Save error:", err);
+                    window.open(url, '_blank');
+                }
+            }
+        }
+
         function renderEpisodesList() {
-            const container = document.getElementById('episodesListContainer');
-            container.innerHTML = '';
+            const containerList = document.getElementById('episodesListContainer');
+            containerList.innerHTML = '';
             const keys = Object.keys(episodesData);
             document.getElementById('epCountBadge').innerText = `${keys.length} ភាគ`;
 
             if (keys.length === 0) {
                 activeEpisodeId = null;
                 document.getElementById('activeEpisodeTitle').innerText = "សូមជ្រើសរើសវីដេអូភាគ";
-                btnRenderCurrentText.innerText = "Dub ភាគនេះ";
+                player.src = "";
                 renderDialogues();
                 return;
             }
 
-            if (!activeEpisodeId || !episodesData[activeEpisodeId]) {
-                activeEpisodeId = keys[0];
-            }
+            if (!activeEpisodeId || !episodesData[activeEpisodeId]) activeEpisodeId = keys[0];
 
             keys.forEach(k => {
                 const ep = episodesData[k];
                 const isSelected = k === activeEpisodeId;
+                const progressVal = ep.progress || 0;
+                let rightActionEl = '';
+                let showProgressBar = false;
+
+                if (ep.status === 'transcribing') {
+                    rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 animate-pulse font-mono">Transcribing ${progressVal}%</span>`;
+                    showProgressBar = true;
+                } else if (ep.status === 'rendering') {
+                    rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 animate-pulse font-mono">Dubbing ${progressVal}%</span>`;
+                    showProgressBar = true;
+                } else if (ep.status === 'waiting') {
+                    rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">Waiting...</span>`;
+                } else if (ep.status === 'completed') {
+                    rightActionEl = `
+            <button onclick="event.stopPropagation(); triggerCustomFolderDownload('${ep.output_url}', '${ep.code}_${ep.filename}_Dubbed.mp4');" 
+                    class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/60 flex items-center gap-1.5 text-[10px] font-bold transition-all cursor-pointer shadow-md shadow-emerald-900/40" 
+                    title="រើស Folder & ទាញយកភាគនេះ">
+              <i class="fa-solid fa-folder-arrow-down text-[10px]"></i>
+              <span>ទាញយក</span>
+            </button>
+          `;
+                } else if (ep.status === 'transcribed' || (ep.dialogues && ep.dialogues.length > 0)) {
+                    rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono font-semibold">transcribed</span>`;
+                } else {
+                    rightActionEl = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-[#101c30] text-slate-400 font-mono">ready</span>`;
+                }
+
                 const div = document.createElement('div');
-                div.className = `p-2 rounded-xl border cursor-pointer transition-all flex items-center justify-between text-xs ${isSelected ? 'bg-cyan-950/60 border-cyan-400 text-cyan-200' : 'bg-[#050a14] border-[#132238] text-slate-400'
+                div.className = `p-2.5 rounded-xl border cursor-pointer transition-all flex flex-col gap-1.5 text-xs ${isSelected ? 'bg-[#0f243a] border-cyan-500/60 text-cyan-200' : 'bg-[#050a14] border-[#132238] text-slate-400 hover:border-slate-700'
                     }`;
 
                 div.innerHTML = `
-          <div class="flex items-center gap-1.5 truncate">
-            <span class="font-bold text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-300">${ep.code}</span>
-            <span class="truncate font-medium">${ep.filename}</span>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 truncate">
+              <button onclick="event.stopPropagation(); selectEpisode('${ep.id}', true, true);" class="w-5 h-5 rounded bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-white flex items-center justify-center shrink-0 transition-all cursor-pointer" title="ចាក់វីដេអូភាគនេះ">
+                <i class="fa-solid fa-play text-[9px]"></i>
+              </button>
+              <span class="font-bold text-[10px] px-1.5 py-0.5 rounded bg-[#101c30] text-slate-300">${ep.code}</span>
+              <span class="truncate">${ep.filename}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${rightActionEl}
+              <button onclick="event.stopPropagation(); deleteEpisode('${ep.id}')" class="text-slate-500 hover:text-rose-400 p-0.5 cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full font-bold ${ep.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
-                        ep.status === 'transcribed' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' : 'bg-[#101c30] text-slate-500'
-                    }">${ep.status}</span>
-            <button onclick="event.stopPropagation(); deleteEpisode('${ep.id}')" class="text-slate-500 hover:text-rose-400 p-0.5">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
+          ${showProgressBar ? `
+            <div class="w-full bg-[#101c30] rounded-full h-1 overflow-hidden mt-0.5">
+              <div class="h-full bg-gradient-to-r from-cyan-400 to-teal-400 transition-all duration-300" style="width: ${progressVal}%"></div>
+            </div>
+          ` : ''}
         `;
 
-                div.onclick = () => {
-                    selectEpisode(ep.id);
-                    if (window.innerWidth < 768) switchMobileTab('dialogues');
-                };
-                container.appendChild(div);
+                div.onclick = () => selectEpisode(ep.id, true, true);
+                containerList.appendChild(div);
             });
 
-            selectEpisode(activeEpisodeId, false);
+            selectEpisode(activeEpisodeId, false, false);
         }
 
-        function selectEpisode(epId, reloadVideo = true) {
+        function selectEpisode(epId, reloadVideo = true, autoPlay = false) {
             activeEpisodeId = epId;
             const ep = episodesData[epId];
             if (!ep) return;
 
             document.getElementById('activeEpisodeTitle').innerText = `${ep.code} - ${ep.filename}`;
-            btnRenderCurrentText.innerText = `Dub ${ep.code}`;
+            document.getElementById('timelineVideoNameTrack').innerText = `${ep.code} - ${ep.filename}`;
 
             if (reloadVideo) {
-                const currentSrc = player.src;
-                const targetSrc = (ep.status === 'completed' && ep.output_url) ? ep.output_url : ep.video_url;
-                if (!currentSrc.includes(targetSrc)) {
-                    player.src = targetSrc;
-                    player.load();
+                const baseSrc = (ep.status === 'completed' && ep.output_url) ? ep.output_url : ep.video_url;
+                const cacheBusterSrc = `${baseSrc}${baseSrc.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
+                player.pause();
+                player.removeAttribute('src');
+                player.load();
+                player.src = cacheBusterSrc;
+                player.load();
+
+                if (autoPlay) {
+                    player.play().catch(e => console.log("Auto-play prevented."));
                 }
             }
 
             if (ep.status === 'completed' && ep.output_url) {
                 btnDownloadDubbed.disabled = false;
-                btnDownloadDubbed.className = "w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg";
-                btnDownloadDubbed.onclick = () => window.open(ep.output_url, '_blank');
+                btnDownloadDubbed.className = "w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer";
+                btnDownloadDubbed.onclick = () => {
+                    const dlName = `${ep.code}_${ep.filename}_Dubbed.mp4`;
+                    triggerCustomFolderDownload(ep.output_url, dlName);
+                };
             } else {
                 btnDownloadDubbed.disabled = true;
-                btnDownloadDubbed.className = "w-full py-2 bg-emerald-600/20 text-emerald-500/40 border border-emerald-600/30 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed";
+                btnDownloadDubbed.className = "w-full py-2 bg-emerald-600/30 text-emerald-400 border border-emerald-600/30 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed";
                 btnDownloadDubbed.onclick = null;
             }
 
@@ -609,33 +1784,34 @@
 
             ep.dialogues.forEach((d, idx) => {
                 const row = document.createElement('div');
-                row.className = "p-2.5 bg-gradient-to-r from-[#08111f] to-[#060e1b] border border-[#14233a] rounded-xl space-y-2";
+                row.className = "p-3 bg-[#08111f] border border-[#14233a] rounded-xl space-y-2 hover:border-[#1d3354] transition-all";
 
                 row.innerHTML = `
           <div class="flex items-center justify-between text-xs">
-            <span class="mono text-[10px] text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">
-              ${d.start.toFixed(2)}s - ${d.end.toFixed(2)}s
-            </span>
-            <div class="flex items-center gap-1.5">
-              <select onchange="updateDialogueSpeaker(${idx}, this.value)" class="bg-[#050a14] border border-[#1b2f4d] rounded px-2 py-0.5 text-[10px] text-slate-200">
-                <option value="male" ${d.speaker === 'male' ? 'selected' : ''}>ប្រុស</option>
-                <option value="female" ${d.speaker === 'female' ? 'selected' : ''}>ស្រី</option>
+            <button onclick="jumpToVideoTime(${d.start})" class="font-mono text-[11px] text-cyan-400 bg-cyan-950/40 hover:bg-cyan-900/60 px-2 py-0.5 rounded border border-cyan-800/40 cursor-pointer" title="ចុចដើម្បីមើលឈុតនេះ">
+              <i class="fa-solid fa-play text-[9px] mr-1"></i> ${d.start.toFixed(2)}s - ${d.end.toFixed(2)}s
+            </button>
+            <div class="flex items-center gap-2">
+              <select onchange="updateDialogueSpeaker(${idx}, this.value)" class="bg-[#050a14] border border-[#1b2f4d] rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none">
+                <option value="male" ${d.speaker === 'male' ? 'selected' : ''}>តួប្រុស (ពិសិដ្ឋ)</option>
+                <option value="female" ${d.speaker === 'female' ? 'selected' : ''}>តួស្រី (ស្រីមុំ)</option>
               </select>
-              <button onclick="previewAudioLine('${d.khmer_text}', '${d.speaker}')" class="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded text-[10px] font-bold">
-                <i class="fa-solid fa-volume-high"></i>
+              <button onclick="previewAudioLine('${d.khmer_text}', '${d.speaker}')" class="px-2.5 py-0.5 bg-[#0284c7]/20 text-[#38bdf8] border border-[#0284c7]/40 rounded text-[11px] hover:bg-[#0284c7]/30 flex items-center gap-1 transition-all cursor-pointer">
+                <i class="fa-solid fa-volume-high text-[10px]"></i>
+                <span>ស្ដាប់</span>
               </button>
-              <button onclick="deleteDialogueLine(${idx})" class="p-1 text-slate-500 hover:text-rose-400">
-                <i class="fa-solid fa-trash-can text-[10px]"></i>
+              <button onclick="deleteDialogueLine(${idx})" class="p-1 text-slate-500 hover:text-rose-400 transition-all cursor-pointer" title="លុបឃ្លានេះ">
+                <i class="fa-solid fa-trash-can text-[11px]"></i>
               </button>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            <div class="p-2 bg-[#050a14] rounded-lg text-slate-400 border border-[#14233a] text-[10px] leading-relaxed">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-2 bg-[#050a14] rounded-lg text-slate-400 border border-[#14233a] text-[11px] leading-relaxed">
               ${d.original_text}
             </div>
             <textarea 
               oninput="updateDialogueText(${idx}, this.value)" 
-              class="p-2 bg-[#050a14] rounded-lg text-slate-100 border border-[#1b2f4d] text-[11px] leading-relaxed resize-none focus:outline-none focus:border-cyan-400 font-sans"
+              class="p-2 bg-[#050a14] rounded-lg text-slate-100 border border-[#1b2f4d] text-[11px] leading-relaxed resize-none focus:outline-none focus:border-cyan-500 font-sans"
               rows="2"
             >${d.khmer_text}</textarea>
           </div>
@@ -643,6 +1819,11 @@
                 area.appendChild(row);
             });
         }
+
+        window.jumpToVideoTime = (time) => {
+            player.currentTime = time;
+            player.play().catch(e => console.log(e));
+        };
 
         window.previewAudioLine = (text, speaker) => {
             if (!text || !text.trim()) return;
@@ -681,124 +1862,243 @@
             await fetch('/api/update-dialogues', { method: 'POST', body: formData });
         }
 
+        window.deleteEpisode = async (id) => {
+            if (!confirm("តើអ្នកចង់លុបភាគនេះមែនទេ?")) return;
+            try {
+                const res = await fetch(`/api/episodes/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    delete episodesData[id];
+                    const remainingKeys = Object.keys(episodesData);
+                    activeEpisodeId = remainingKeys.length > 0 ? remainingKeys[0] : null;
+                    await loadEpisodes();
+                }
+            } catch (err) {
+                console.error("Delete error:", err);
+            }
+        };
+
+        document.getElementById('btnClearAllEpisodes').addEventListener('click', async () => {
+            if (Object.keys(episodesData).length === 0) return alert("គ្មានភាគវីដេអូសម្រាប់លុបទេ!");
+            if (!confirm("តើអ្នកពិតជាចង់សម្អាតវីដេអូគ្រប់ភាគទាំងអស់មែនទេ?")) return;
+            try {
+                const res = await fetch('/api/clear-all-episodes', { method: 'POST' });
+                if (res.ok) {
+                    episodesData = {};
+                    activeEpisodeId = null;
+                    document.getElementById('activeEpisodeTitle').innerText = "សូមជ្រើសរើសវីដេអូភាគ";
+                    document.getElementById('dialoguesScrollArea').innerHTML = `
+            <div id="emptyDialoguePlaceholder" class="h-full flex flex-col items-center justify-center text-slate-600 gap-2">
+              <div class="w-12 h-12 rounded-xl bg-[#0e1828] border border-[#1b2f4d] flex items-center justify-center text-slate-500 text-xl"><i class="fa-solid fa-closed-captioning"></i></div>
+              <p class="text-xs text-slate-400">មិនទាន់មានទិន្នន័យអក្សរនៅឡើយ។</p>
+            </div>
+          `;
+                    player.src = "";
+                    await loadEpisodes();
+                }
+            } catch (err) {
+                console.error("Clear error:", err);
+            }
+        });
+
         document.getElementById('batchFileInput').addEventListener('change', async (e) => {
             const files = e.target.files;
             if (!files.length) return;
             const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append("files", files[i]);
-            }
-            await fetch('/api/batch-upload', { method: 'POST', body: formData });
+            for (let i = 0; i < files.length; i++) formData.append("files", files[i]);
+
+            const res = await fetch('/api/batch-upload', { method: 'POST', body: formData });
             e.target.value = '';
-            loadEpisodes();
+            if (res.ok) {
+                const data = await res.json();
+                await loadEpisodes();
+                if (data.uploaded && data.uploaded.length > 0) {
+                    selectEpisode(data.uploaded[0].id, true, false);
+                }
+            }
         });
 
-        document.getElementById('btnTranscribeCurrent').addEventListener('click', async () => {
-            if (!activeEpisodeId) return alert("សូមជ្រើសរើសភាគ!");
-            const btn = document.getElementById('btnTranscribeCurrent');
-            const textSpan = document.getElementById('btnTranscribeText');
-            textSpan.innerText = "...";
-            btn.disabled = true;
-
+        async function executeTranscribeSingle(epId) {
             const formData = new FormData();
-            formData.append("episode_id", activeEpisodeId);
-            formData.append("model_size", document.getElementById('aiModelSelect').value);
+            formData.append("episode_id", epId);
+            formData.append("model_size", aiModelSelect.value);
             formData.append("cloud_key", cloudKeyInput.value.trim());
             formData.append("lang", document.getElementById('sourceLangSelect').value);
+            formData.append("speaker_mode", document.getElementById('speakerModeSelect').value);
 
-            try {
-                const res = await fetch('/api/transcribe-episode', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (episodesData[activeEpisodeId]) {
-                    episodesData[activeEpisodeId].dialogues = data.dialogues;
-                    episodesData[activeEpisodeId].status = 'transcribed';
-                }
-                renderDialogues();
-            } catch (err) {
-                alert("បរាជ័យ: " + err);
-            } finally {
-                textSpan.innerText = "Transcribe";
-                btn.disabled = false;
-                loadEpisodes();
+            const res = await fetch('/api/transcribe-episode', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (episodesData[epId]) {
+                episodesData[epId].dialogues = data.dialogues;
+                episodesData[epId].status = 'transcribed';
+                episodesData[epId].progress = 100;
             }
-        });
-
-        document.getElementById('btnRenderCurrent').addEventListener('click', async () => {
-            if (!activeEpisodeId) return alert("សូមជ្រើសរើសភាគ!");
-            const ep = episodesData[activeEpisodeId];
-            if (!ep.dialogues || ep.dialogues.length === 0) return alert("សូម Transcribe ជាមុន!");
-
-            const payload = {
-                episode_ids: [activeEpisodeId],
-                merge_all_into_one: false,
-                dub_volume: parseFloat(dubVolumeSlider.value),
-                kiri_api_key: kiriApiKeyInput.value.trim()
-            };
-
-            await fetch('/api/batch-render', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            startRenderPolling();
-        });
-
-        document.getElementById('btnExportAll').addEventListener('click', async () => {
-            const epIds = Object.keys(episodesData);
-            if (!epIds.length) return alert("គ្មានវីដេអូទេ!");
-
-            const payload = {
-                episode_ids: epIds,
-                merge_all_into_one: document.getElementById('mergeEpisodesCheckbox').checked,
-                dub_volume: parseFloat(dubVolumeSlider.value),
-                kiri_api_key: kiriApiKeyInput.value.trim()
-            };
-
-            await fetch('/api/batch-render', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            startRenderPolling();
-        });
-
-        function startRenderPolling() {
-            if (pollInterval) clearInterval(pollInterval);
-            const progressBar = document.getElementById('renderProgressBar');
-            const statusText = document.getElementById('renderStatusText');
-            const percentText = document.getElementById('renderPercentText');
-
-            pollInterval = setInterval(async () => {
-                await loadEpisodes();
-                const ep = episodesData[activeEpisodeId];
-                if (ep && ep.status === 'completed') {
-                    progressBar.style.width = '100%';
-                    percentText.innerText = '100%';
-                    statusText.innerText = 'Render ចប់!';
-                    clearInterval(pollInterval);
-                } else {
-                    progressBar.style.width = '70%';
-                    percentText.innerText = 'Dub...';
-                    statusText.innerText = 'កំពុង Dubbing...';
-                }
-            }, 2500);
+            return data;
         }
 
-        window.deleteEpisode = async (id) => {
-            if (!confirm("លុបភាគនេះ?")) return;
-            await fetch(`/api/episodes/${id}`, { method: 'DELETE' });
-            loadEpisodes();
+        function startProgressPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(async () => {
+                await loadEpisodes();
+                const eps = Object.values(episodesData);
+
+                const renderingEps = eps.filter(e => e.status === 'rendering');
+                if (renderingEps.length > 0) {
+                    const avgProg = Math.round(renderingEps.reduce((acc, cur) => acc + (cur.progress || 0), 0) / renderingEps.length);
+                    document.getElementById('renderStatusText').innerText = `កំពុង Render...`;
+                    document.getElementById('renderPercentText').innerText = `${avgProg}%`;
+                    document.getElementById('renderProgressBar').style.width = `${avgProg}%`;
+                } else if (eps.some(e => e.status === 'completed')) {
+                    document.getElementById('renderStatusText').innerText = `រួចរាល់ ១០០%`;
+                    document.getElementById('renderPercentText').innerText = `100%`;
+                    document.getElementById('renderProgressBar').style.width = `100%`;
+                }
+
+                const hasRunning = eps.some(e => e.status === 'transcribing' || e.status === 'rendering');
+                if (!hasRunning) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            }, 1200);
+        }
+
+        async function runTranscribeAllSequentially() {
+            const epIds = Object.keys(episodesData);
+            const pendingEpIds = epIds.filter(id => !episodesData[id].dialogues || episodesData[id].dialogues.length === 0);
+            if (pendingEpIds.length === 0) return true;
+
+            const btn = document.getElementById('btnTranscribeAll');
+            const textSpan = document.getElementById('btnTranscribeAllText');
+            btn.disabled = true;
+            startProgressPolling();
+
+            for (let i = 0; i < pendingEpIds.length; i++) {
+                const currentId = pendingEpIds[i];
+                const ep = episodesData[currentId];
+                textSpan.innerText = `Transcribe ${ep.code} (${i + 1}/${pendingEpIds.length})...`;
+                try {
+                    await executeTranscribeSingle(currentId);
+                    await loadEpisodes();
+                    if (currentId === activeEpisodeId) renderDialogues();
+                } catch (e) {
+                    console.error(`Transcribe error for ${ep.code}:`, e);
+                }
+            }
+
+            textSpan.innerText = "Transcribe ទាំងអស់";
+            btn.disabled = false;
+            await loadEpisodes();
+            return true;
+        }
+
+        function getNormalizedCoords(el) {
+            const cW = overlayCanvas.clientWidth || 1;
+            const cH = overlayCanvas.clientHeight || 1;
+            return {
+                x: Math.max(0, el.offsetLeft / cW),
+                y: Math.max(0, el.offsetTop / cH),
+                w: Math.max(0.05, el.offsetWidth / cW),
+                h: Math.max(0.02, el.offsetHeight / cH)
+            };
+        }
+
+        function getRenderPayload(targetIds) {
+            const logoC = getNormalizedCoords(dragLogoBox);
+
+            const compiledTexts = textItemsData.map(t => {
+                const el = document.getElementById(t.id);
+                const norm = el ? getNormalizedCoords(el) : { x: 0.1, y: 0.1 };
+                return {
+                    text: t.text,
+                    style: t.style,
+                    size: t.size,
+                    norm_x: norm.x,
+                    norm_y: norm.y
+                };
+            });
+
+            const compiledBlurs = blurItemsData.map(b => {
+                const el = document.getElementById(b.id);
+                const norm = el ? getNormalizedCoords(el) : { x: 0.1, y: 0.8, w: 0.4, h: 0.1 };
+                return {
+                    norm_x: norm.x,
+                    norm_y: norm.y,
+                    norm_w: norm.w,
+                    norm_h: norm.h
+                };
+            });
+
+            const keepBgmEl = document.getElementById('keepBgmToggle');
+            const keepBgmVal = keepBgmEl ? keepBgmEl.checked : true;
+
+            return {
+                episode_ids: targetIds,
+                merge_all_into_one: document.getElementById('mergeEpisodesCheckbox').checked,
+                dub_volume: parseFloat(dubVolumeSlider.value),
+                keep_bgm: keepBgmVal,
+                kiri_api_key: kiriApiKeyInput.value.trim(),
+                speaker_mode: document.getElementById('speakerModeSelect').value,
+                resolution: videoResolutionSelect.value,
+                anti_copyright: antiCopyrightToggle.checked,
+
+                blur_items: compiledBlurs,
+                text_items: compiledTexts,
+
+                enable_logo: enableLogoCheckbox.checked,
+                logo_filename: uploadedLogoFileName,
+                logo_norm_x: logoC.x,
+                logo_norm_y: logoC.y,
+                logo_norm_w: logoC.w
+            };
+        }
+
+        window.triggerStartExport = async () => {
+            const sub = await checkSubscriptionFromServer('studio');
+            if (!sub.active) {
+                openFullStudioPaywall();
+                return;
+            }
+
+            const allEpIds = Object.keys(episodesData);
+            if (!allEpIds.length) return alert("គ្មានវីដេអូសម្រាប់ Render ទេ!");
+
+            const needTranscribe = allEpIds.filter(id => !episodesData[id].dialogues || episodesData[id].dialogues.length === 0);
+            if (needTranscribe.length > 0) {
+                const exportBtnText = document.getElementById('btnExportAllText');
+                exportBtnText.innerText = `កំពុង Transcribe (${needTranscribe.length} ភាគ)...`;
+                await runTranscribeAllSequentially();
+                exportBtnText.innerText = "Turbo Export ទាំងអស់";
+            }
+
+            const targetRenderIds = allEpIds;
+            const exportBtnText = document.getElementById('btnExportAllText');
+            exportBtnText.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> កំពុងចាប់ផ្ដើម Render...`;
+
+            try {
+                const payload = getRenderPayload(targetRenderIds);
+
+                const res = await fetch('/api/batch-render', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                    startProgressPolling();
+                } else {
+                    const errData = await res.json();
+                    alert("Render Error: " + (errData.detail || "Server error"));
+                    exportBtnText.innerText = "Turbo Export ទាំងអស់";
+                }
+            } catch (err) {
+                console.error("Export Error:", err);
+                alert("មិនអាចតភ្ជាប់ទៅកាន់ Server ដើម្បី Render បានទេ: " + err);
+                exportBtnText.innerText = "Turbo Export ទាំងអស់";
+            }
         };
 
-        document.getElementById('btnClearAllEpisodes').addEventListener('click', async () => {
-            if (!confirm("សម្អាតទាំងអស់?")) return;
-            await fetch('/api/clear-all-episodes', { method: 'POST' });
-            loadEpisodes();
-        });
-
         loadEpisodes();
+        updateLicenseBadgesUI();
     </script>
 </body>
 
