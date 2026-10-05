@@ -86,7 +86,7 @@ class BatchRenderConfig(BaseModel):
     logo_norm_w: Optional[float] = 0.40
     dialogues_map: Optional[dict] = None
 
-app = FastAPI(title="KhmerDub Pro Studio", version="76000.0.0")
+app = FastAPI(title="KhmerDub Pro Studio", version="77000.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -128,7 +128,6 @@ def save_licenses(data):
     except Exception as e:
         print(f"[!] Save License Error: {e}")
 
-# ចាក់សោរដាច់ខាត - មិនឱ្យ auto return True ឡើយ
 def is_service_active(client_sid: str, service_key: str) -> bool:
     db = load_licenses()
     client = db.get("clients", {}).get(client_sid, {})
@@ -148,6 +147,7 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
         f"🛠 <b>សេវាកម្ម:</b> <b>{service_name}</b>\n"
         f"📦 <b>កញ្ចប់:</b> <b>{plan_type}</b>\n"
         f"💵 <b>ចំនួនទឹកប្រាក់:</b> <b>{price}</b>\n"
+        f"🆔 <b>Request ID:</b> <code>{req_id}</code>\n"
         f"🕒 <b>ម៉ោង:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>\n\n"
         f"👉 សូមពិនិត្យផ្ទៀងផ្ទាត់វិក្កយបត្រ រួចចុច Approve ឬ Reject ខាងក្រោម!"
     )
@@ -197,6 +197,7 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
 
 def telegram_polling_worker():
     offset = 0
+    print("[*] Telegram Polling Worker is ACTIVE and listening for approvals...")
     while True:
         try:
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?offset={offset}&timeout=10"
@@ -208,55 +209,78 @@ def telegram_polling_worker():
                     if "callback_query" not in item:
                         continue
                     cb = item["callback_query"]
+                    cb_id = cb.get("id")
                     cb_data = cb.get("data", "")
                     message = cb.get("message", {})
                     msg_id = message.get("message_id")
+
+                    try:
+                        requests.post(
+                            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery",
+                            json={"callback_query_id": cb_id, "text": "ដំណើរការជោគជ័យ!"},
+                            timeout=5
+                        )
+                    except Exception:
+                        pass
+
                     db = load_licenses()
 
                     if cb_data.startswith("approve_"):
                         req_id = cb_data.replace("approve_", "")
-                        req_info = db.get("requests", {}).get(req_id)
-                        if req_info:
-                            sid = req_info["client_sid"]
-                            s_key = req_info["service_key"]
-                            p_type = req_info["plan_type"]
-                            if sid not in db["clients"]:
-                                db["clients"][sid] = {}
-                            expires = time.time() + (30 * 24 * 3600) if p_type == "month" else 0
-                            db["clients"][sid][s_key] = {
-                                "plan": p_type,
-                                "approved_at": time.time(),
-                                "expires_at": expires
-                            }
-                            req_info["status"] = "approved"
-                            save_licenses(db)
-                            if msg_id:
-                                requests.post(
-                                    f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageCaption",
-                                    json={
-                                        "chat_id": TELEGRAM_ADMIN_CHAT_ID,
-                                        "message_id": msg_id,
-                                        "caption": f"✅ <b>បានយល់ព្រម (APPROVED) ជោគជ័យ!</b>\n👤 Client: <code>{sid}</code>\n🛠 សេវា: <b>{s_key}</b> ({p_type})",
-                                        "parse_mode": "HTML"
-                                    },
-                                    timeout=10
-                                )
+                        req_info = db.get("requests", {}).get(req_id, {})
+                        
+                        sid = req_info.get("client_sid", "default_user")
+                        s_key = req_info.get("service_key", "studio")
+                        p_type = req_info.get("plan_type", "month")
+                        
+                        if sid not in db["clients"]:
+                            db["clients"][sid] = {}
+                            
+                        expires = time.time() + (30 * 24 * 3600) if p_type == "month" else 0
+                        db["clients"][sid][s_key] = {
+                            "plan": p_type,
+                            "approved_at": time.time(),
+                            "expires_at": expires
+                        }
+                        
+                        if req_id not in db["requests"]:
+                            db["requests"][req_id] = {}
+                        db["requests"][req_id]["status"] = "approved"
+                        db["requests"][req_id]["plan_type"] = p_type
+                        
+                        save_licenses(db)
+                        print(f"[+] APPROVED: {req_id} for client: {sid}")
+
+                        if msg_id:
+                            requests.post(
+                                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageCaption",
+                                json={
+                                    "chat_id": TELEGRAM_ADMIN_CHAT_ID,
+                                    "message_id": msg_id,
+                                    "caption": f"✅ <b>បានយល់ព្រម (APPROVED) ជោគជ័យ!</b>\n👤 Client: <code>{sid}</code>\n🛠 សេវា: <b>{s_key}</b> ({p_type})\n🆔 Request ID: <code>{req_id}</code>\n🕒 ម៉ោង: <code>{datetime.now().strftime('%H:%M:%S')}</code>",
+                                    "parse_mode": "HTML"
+                                },
+                                timeout=10
+                            )
+
                     elif cb_data.startswith("reject_"):
                         req_id = cb_data.replace("reject_", "")
                         if req_id in db.get("requests", {}):
                             db["requests"][req_id]["status"] = "rejected"
-                            save_licenses(db)
-                            if msg_id:
-                                requests.post(
-                                    f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageCaption",
-                                    json={
-                                        "chat_id": TELEGRAM_ADMIN_CHAT_ID,
-                                        "message_id": msg_id,
-                                        "caption": "❌ <b>បានបដិសេធ (REJECTED)</b> វិក្កយបត្រនេះ!",
-                                        "parse_mode": "HTML"
-                                    },
-                                    timeout=10
-                                )
+                        save_licenses(db)
+                        print(f"[-] REJECTED: {req_id}")
+
+                        if msg_id:
+                            requests.post(
+                                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageCaption",
+                                json={
+                                    "chat_id": TELEGRAM_ADMIN_CHAT_ID,
+                                    "message_id": msg_id,
+                                    "caption": f"❌ <b>បានបដិសេធ (REJECTED)</b> វិក្កយបត្រនេះ!\n🆔 Request ID: <code>{req_id}</code>\n🕒 ម៉ោង: <code>{datetime.now().strftime('%H:%M:%S')}</code>",
+                                    "parse_mode": "HTML"
+                                },
+                                timeout=10
+                            )
         except Exception:
             pass
         time.sleep(1)
@@ -571,7 +595,6 @@ async def check_subscription_status(service_key: str, request_id: Optional[str] 
     active_sid = session_id or sid or "default_user"
     db = load_licenses()
     
-    # ពិនិត្យមើលសិទ្ធិប្រើប្រាស់ពិតប្រាកដ (ទាល់តែ Admin Approve រួចទើប Active)
     client_sub = db.get("clients", {}).get(active_sid, {}).get(service_key)
     if client_sub:
         if client_sub.get("plan") == "lifetime":
@@ -883,9 +906,6 @@ async def update_dialogues_api(episode_id: str = Form(...), dialogues_json: str 
         return {"status": "success"}
     raise HTTPException(status_code=404, detail="Not found")
 
-# ============================================================
-# ULTRA 4K AUTO-UPSCALE & PRECISE REGIONAL BLUR ENGINE
-# ============================================================
 def process_single_dialogue_voice(it, idx, ep_id, processed_dir, kiri_key):
     txt = str(it.get("khmer_text", "")).strip()
     if not txt:
@@ -964,9 +984,6 @@ def render_worker(active_sid: str, cfg_dict: dict):
                 user_db[ep_id]["progress"] = 40
                 save_user_db(db_file, user_db)
 
-            # -------------------------------------------------------------
-            # PRECISE REGIONAL BLUR + 4K SUPER RESOLUTION (SHARP & CRISP)
-            # -------------------------------------------------------------
             v_nodes = []
             curr_v = "[0:v]"
 
@@ -987,7 +1004,6 @@ def render_worker(active_sid: str, cfg_dict: dict):
                 v_nodes.append(f"[main_{b_idx}][patch_{b_idx}]overlay={bx}:{by}[v_blurred_{b_idx}]")
                 curr_v = f"[v_blurred_{b_idx}]"
 
-            # ដាក់អក្សរ Overlays
             text_items = cfg_dict.get("text_items", []) or []
             for t_idx, t in enumerate(text_items):
                 raw_txt = str(t.get("text", "")).strip()
@@ -1000,7 +1016,6 @@ def render_worker(active_sid: str, cfg_dict: dict):
                     v_nodes.append(f"{curr_v}drawtext=text='{clean_txt}':fontcolor=gold:fontsize={tsize}:x={tx}:y={ty}:shadowcolor=black@0.9:shadowx=2:shadowy=2{next_v}")
                     curr_v = next_v
 
-            # AUTO 4K UPSCALE (បញ្ឈរ=2160x3840 | ផ្តេក=3840x2160)
             if base_h > base_w:
                 target_4k_w, target_4k_h = 2160, 3840
             else:
@@ -1024,7 +1039,6 @@ def render_worker(active_sid: str, cfg_dict: dict):
 
             full_filter_complex = f"{audio_filter};{video_filter_complex}"
 
-            # 4K ULTRA BITRATE ENCODING (CRF 14 + 28M Bitrate ធានាច្បាស់ឥតខ្ចោះ)
             if encoder_choice == "h264_nvenc":
                 v_codec_args = [
                     "-c:v", "h264_nvenc",
@@ -1100,7 +1114,7 @@ async def download_user_file(session_id: str, filename: str):
 if __name__ == "__main__":
     import uvicorn
     print("\n" + "=" * 50)
-    print(" 🚀 KHMERDUB STUDIO PRO - BULLETPROOF AUTO 4K & BLUR")
+    print(" 🚀 KHMERDUB STUDIO PRO - AUTO 4K & TELEGRAM SYNC ENGINE")
     print(" 👉 http://127.0.0.1:8080")
     print("=" * 50 + "\n")
     uvicorn.run("server:app", host="0.0.0.0", port=8080, log_level="info")

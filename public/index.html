@@ -857,6 +857,7 @@
         async function updateLicenseBadgesUI() {
             const splitSub = await checkSubscriptionFromServer('splitter');
             const studioSub = await checkSubscriptionFromServer('studio');
+            const localVip = localStorage.getItem('khmerdub_studio_vip') === 'true';
 
             const splitBadge = document.getElementById('splitBadgeStatus');
             if (splitSub && splitSub.active) {
@@ -870,8 +871,8 @@
             const vipBadge = document.getElementById('vipStatusBadge');
             const studioLockoutOverlay = document.getElementById('studioLockoutOverlay');
 
-            if (studioSub && studioSub.active) {
-                vipBadge.innerText = studioSub.type === 'lifetime' ? 'STUDIO LIFETIME' : `VIP (${studioSub.days_left})`;
+            if ((studioSub && studioSub.active) || localVip) {
+                vipBadge.innerText = (studioSub && studioSub.type === 'lifetime') ? 'STUDIO LIFETIME' : 'VIP ACTIVE';
                 vipBadge.className = "hidden sm:inline text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold cursor-pointer";
                 studioLockoutOverlay.classList.add('hidden');
             } else {
@@ -883,7 +884,8 @@
 
         window.handleActionWithStudioCheck = async (actionType) => {
             const sub = await checkSubscriptionFromServer('studio');
-            if (!sub || !sub.active) {
+            const localVip = localStorage.getItem('khmerdub_studio_vip') === 'true';
+            if ((!sub || !sub.active) && !localVip) {
                 openFullStudioPaywall();
                 return;
             }
@@ -952,7 +954,6 @@
             if (splitPollingInterval) clearInterval(splitPollingInterval);
         };
 
-        // HYBRID DIRECT TELEGRAM SUBMISSION (FOR SPLITTER)
         window.submitSplitPaymentWithReceipt = async () => {
             const receiptFile = splitReceiptInput.files[0];
             if (!receiptFile) return alert("សូមជ្រើសរើសរូបថតវិក្កយបត្របង់ប្រាក់ជាមុនសិន!");
@@ -965,7 +966,6 @@
             let sentSuccess = false;
             const price = currentSplitPlan === 'lifetime' ? '15.00$' : '1.50$';
 
-            // 1. សាកល្បងហៅតាម Backend Server
             try {
                 const formData = new FormData();
                 formData.append("receipt", receiptFile);
@@ -978,11 +978,8 @@
                     reqId = resData.request_id || reqId;
                     sentSuccess = true;
                 }
-            } catch (e) {
-                console.warn("Backend API not reachable, falling back to direct Telegram API...");
-            }
+            } catch (e) { }
 
-            // 2. Direct Fallback ទៅ Telegram Bot ដោយផ្ទាល់ (គាំទ្រលើ Vercel)
             if (!sentSuccess) {
                 try {
                     const caption = `🧾 <b>មានវិក្កយបត្របង់ប្រាក់ថ្មី!</b>\n\n` +
@@ -1012,9 +1009,7 @@
                         body: tgForm
                     });
 
-                    if (tgRes.ok) {
-                        sentSuccess = true;
-                    }
+                    if (tgRes.ok) sentSuccess = true;
                 } catch (tgErr) {
                     console.error("Direct Telegram error:", tgErr);
                 }
@@ -1026,19 +1021,37 @@
 
                 if (splitPollingInterval) clearInterval(splitPollingInterval);
                 splitPollingInterval = setInterval(async () => {
-                    const check = await checkSubscriptionFromServer('splitter', reqId);
-                    if (check && check.active) {
+                    let isApproved = false;
+                    try {
+                        const check = await checkSubscriptionFromServer('splitter', reqId);
+                        if (check && check.active) isApproved = true;
+                    } catch (e) { }
+
+                    if (!isApproved) {
+                        try {
+                            const tgCheckRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=-5`);
+                            const tgData = await tgCheckRes.json();
+                            if (tgData.ok && tgData.result) {
+                                for (const update of tgData.result) {
+                                    if (update.callback_query && update.callback_query.data === `approve_${reqId}`) {
+                                        isApproved = true;
+                                        break;
+                                    }
+                                    if (update.message && update.message.caption && update.message.caption.includes("APPROVED") && update.message.caption.includes(reqId)) {
+                                        isApproved = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (tgE) { }
+                    }
+
+                    if (isApproved) {
                         clearInterval(splitPollingInterval);
                         alert("🎉 Admin បានចុច Approve ជោគជ័យ! Tool កាត់បំបែកភាគត្រូវបានដោះសោរ!");
                         closeSplitPaywall();
                         updateLicenseBadgesUI();
                         document.getElementById('splitVideoModal').classList.remove('hidden');
-                    } else if (check && check.request_status === 'rejected') {
-                        clearInterval(splitPollingInterval);
-                        alert("❌ វិក្កយបត្រត្រូវបាន Admin បដិសេធ (Reject)! សូមពិនិត្យផ្ទៀងផ្ទាត់ឡើងវិញ។");
-                        btn.disabled = false;
-                        btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឡើងវិញ`;
-                        document.getElementById('splitWaitNotice').classList.add('hidden');
                     }
                 }, 2000);
             } else {
@@ -1097,7 +1110,6 @@
             if (studioPollingInterval) clearInterval(studioPollingInterval);
         };
 
-        // HYBRID DIRECT TELEGRAM SUBMISSION (FOR STUDIO)
         window.submitStudioPaymentWithReceipt = async () => {
             const receiptFile = studioReceiptInput.files[0];
             if (!receiptFile) return alert("សូមជ្រើសរើសរូបថតវិក្កយបត្របង់ប្រាក់ជាមុនសិន!");
@@ -1110,7 +1122,6 @@
             let sentSuccess = false;
             const price = currentStudioPlan === 'lifetime' ? '49.99$' : '5.00$';
 
-            // 1. សាកល្បងហៅតាម Backend Server
             try {
                 const formData = new FormData();
                 formData.append("receipt", receiptFile);
@@ -1123,11 +1134,8 @@
                     reqId = resData.request_id || reqId;
                     sentSuccess = true;
                 }
-            } catch (e) {
-                console.warn("Backend API not reachable, falling back to direct Telegram API...");
-            }
+            } catch (e) { }
 
-            // 2. Direct Fallback ទៅ Telegram Bot ដោយផ្ទាល់ (គាំទ្រលើ Vercel)
             if (!sentSuccess) {
                 try {
                     const caption = `🧾 <b>មានវិក្កយបត្របង់ប្រាក់ថ្មី!</b>\n\n` +
@@ -1157,9 +1165,7 @@
                         body: tgForm
                     });
 
-                    if (tgRes.ok) {
-                        sentSuccess = true;
-                    }
+                    if (tgRes.ok) sentSuccess = true;
                 } catch (tgErr) {
                     console.error("Direct Telegram error:", tgErr);
                 }
@@ -1171,18 +1177,37 @@
 
                 if (studioPollingInterval) clearInterval(studioPollingInterval);
                 studioPollingInterval = setInterval(async () => {
-                    const check = await checkSubscriptionFromServer('studio', reqId);
-                    if (check && check.active) {
+                    let isApproved = false;
+                    try {
+                        const check = await checkSubscriptionFromServer('studio', reqId);
+                        if (check && check.active) isApproved = true;
+                    } catch (e) { }
+
+                    if (!isApproved) {
+                        try {
+                            const tgCheckRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=-5`);
+                            const tgData = await tgCheckRes.json();
+                            if (tgData.ok && tgData.result) {
+                                for (const update of tgData.result) {
+                                    if (update.callback_query && update.callback_query.data === `approve_${reqId}`) {
+                                        isApproved = true;
+                                        break;
+                                    }
+                                    if (update.message && update.message.caption && update.message.caption.includes("APPROVED") && update.message.caption.includes(reqId)) {
+                                        isApproved = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (tgE) { }
+                    }
+
+                    if (isApproved) {
                         clearInterval(studioPollingInterval);
+                        localStorage.setItem('khmerdub_studio_vip', 'true');
                         alert("🎉 Admin បានចុចយល់ព្រម (Approve) ក្នុង Telegram ជោគជ័យ! KHMERDUB STUDIO ត្រូវបានដោះសោរ!");
                         closeStudioPaywall();
                         updateLicenseBadgesUI();
-                    } else if (check && check.request_status === 'rejected') {
-                        clearInterval(studioPollingInterval);
-                        alert("❌ វិក្កយបត្រត្រូវបាន Admin បដិសេធ (Reject)! សូមពិនិត្យផ្ទៀងផ្ទាត់ឡើងវិញ។");
-                        btn.disabled = false;
-                        btn.innerHTML = `<i class="fa-brands fa-telegram mr-1"></i> ផ្ញើវិក្កយបត្រស្នើសុំ Approve ឡើងវិញ`;
-                        document.getElementById('studioWaitNotice').classList.add('hidden');
                     }
                 }, 2000);
             } else {
@@ -2177,7 +2202,8 @@
 
         window.triggerStartExport = async () => {
             const sub = await checkSubscriptionFromServer('studio');
-            if (!sub || !sub.active) {
+            const localVip = localStorage.getItem('khmerdub_studio_vip') === 'true';
+            if ((!sub || !sub.active) && !localVip) {
                 openFullStudioPaywall();
                 return;
             }
