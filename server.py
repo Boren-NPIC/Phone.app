@@ -150,6 +150,7 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
         f"🕒 <b>ម៉ោង:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>\n\n"
         f"👉 សូមពិនិត្យផ្ទៀងផ្ទាត់វិក្កយបត្រ រួចចុច Approve ឬ Reject ខាងក្រោម!"
     )
+
     keyboard = {
         "inline_keyboard": [
             [
@@ -161,8 +162,10 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
     keyboard_json = json.dumps(keyboard)
     url_photo = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     url_msg = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
     sent_success = False
 
+    # ១. សាកល្បងផ្ញើរូបថតវិក្កយបត្រ
     if receipt_path.exists():
         try:
             with open(str(receipt_path), "rb") as img_file:
@@ -174,11 +177,13 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
                     "reply_markup": keyboard_json
                 }
                 resp = requests.post(url_photo, data=data, files=files, timeout=20)
+                print(f"[Telegram sendPhoto Log] Status: {resp.status_code} | Body: {resp.text}")
                 if resp.status_code == 200:
                     sent_success = True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[!] Telegram sendPhoto Exception: {e}")
 
+    # ២. ប្រសិនបើផ្ញើរូបភាពមិនជោគជ័យ ផ្ញើសារអក្សរជំនួសភ្លាម (Fallback)
     if not sent_success:
         try:
             data_text = {
@@ -188,12 +193,13 @@ def send_telegram_receipt_photo(req_id: str, client_sid: str, service_name: str,
                 "reply_markup": keyboard_json
             }
             resp_msg = requests.post(url_msg, json=data_text, timeout=15)
+            print(f"[Telegram sendMessage Log] Status: {resp_msg.status_code} | Body: {resp_msg.text}")
             if resp_msg.status_code == 200:
                 sent_success = True
-        except Exception:
-            pass
-    return sent_success
+        except Exception as e:
+            print(f"[!] Telegram sendMessage Exception: {e}")
 
+    return sent_success
 def telegram_polling_worker():
     offset = 0
     while True:
